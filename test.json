@@ -1,0 +1,40 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/2018/credentials/examples/v1"
+  ],
+  "id": "urn:uuid:ca0dacbf-47cc-4f3c-a7a6-88142f2e981c",
+  "type": [
+    "VerifiableCredential",
+    "GovernmentIdentityCredential"
+  ],
+  "issuer": {
+    "id": "did:decentralia:national-authority",
+    "name": "Decentralia National Identity Authority"
+  },
+  "issuanceDate": "2026-02-28T21:27:06Z",
+  "expirationDate": "2036-02-28T00:00:00Z",
+  "credentialSubject": {
+    "id": "did:decentralia:citizen-mm6u0f4s",
+    "type": "GovernmentID",
+    "givenName": "Joe",
+    "familyName": "Schmoe",
+    "dateOfBirth": "2027-06-07",
+    "nationalIdNumber": "GOV-2026-94498",
+    "address": {
+      "streetAddress": "67 Top G Avenue",
+      "addressLocality": "Etherton",
+      "addressRegion": "Monkey ",
+      "postalCode": "42067",
+      "addressCountry": "Decentralia"
+    },
+    "biometricTemplateHash": "0x7947f25a7947f25a7947f25a7947f25a7947f25a7947f25a7947f25a7947f25a"
+  },
+  "proof": {
+    "type": "EcdsaSecp256k1Signature2019",
+    "created": "2026-02-28T21:27:06Z",
+    "proofPurpose": "assertionMethod",
+    "verificationMethod": "did:decentralia:national-authority#key-1",
+    "jws": "Sm9lLlNjaG1vZS43ZjNiNDY3OC04ZjI4LTRlYjAtODE5YS0wYWQ1NzQ5OTZhNzc==="
+  }
+}
