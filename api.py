@@ -19,6 +19,7 @@ import json
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from web3 import Web3
 
@@ -40,6 +41,14 @@ app = FastAPI(
     title="Identity Registry API",
     description="Register and verify arbitrary JSON identity documents on-chain.",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ── In-memory default contract address (set after first deploy) ─────────────
