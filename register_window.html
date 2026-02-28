@@ -1,497 +1,856 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Decentralia · Resident Registry</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet"/>
-<style>
-  :root {
-    --bg: #07090f;
-    --panel: #0c1020;
-    --border: #1a2540;
-    --accent: #00e5ff;
-    --accent2: #ff6b35;
-    --green: #00ff9d;
-    --text: #c8d8f0;
-    --muted: #4a6080;
-    --error: #ff3860;
-    --grid: rgba(0,229,255,0.03);
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; }
-  body { min-height: 100vh; overflow-x: hidden; }
-
-  /* grid overlay */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
-
-  .scanline {
-    position: fixed; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.4;
-    animation: scan 6s linear infinite;
-    z-index: 100; pointer-events: none;
-  }
-  @keyframes scan { from { top: -10px; } to { top: 100vh; } }
-
-  /* LAYOUT */
-  .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
-
-  /* HEADER */
-  .header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 32px;
-  }
-  .logo-block { display: flex; align-items: center; gap: 16px; }
-  .logo-hex {
-    width: 52px; height: 52px;
-    background: var(--accent); clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Share Tech Mono', monospace; font-size: 20px; color: var(--bg); font-weight: bold;
-    animation: pulse-hex 3s ease-in-out infinite;
-  }
-  @keyframes pulse-hex {
-    0%,100% { box-shadow: 0 0 0 0 rgba(0,229,255,0.4); }
-    50% { box-shadow: 0 0 0 10px rgba(0,229,255,0); }
-  }
-  .logo-text h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: 4px; color: #fff; text-transform: uppercase; }
-  .logo-text p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
-  .header-status {
-    text-align: right; font-family: 'Share Tech Mono', monospace; font-size: 11px;
-    color: var(--muted); line-height: 1.8;
-  }
-  .header-status .live { color: var(--green); }
-  .header-status .live::before { content: '● '; animation: blink 1.2s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  /* MAIN GRID */
-  .main-grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
-  @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
-
-  /* PANELS */
-  .panel {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 2px; overflow: hidden;
-  }
-  .panel-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 18px; border-bottom: 1px solid var(--border);
-    background: rgba(0,229,255,0.04);
-  }
-  .panel-header .tag {
-    font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px;
-    color: var(--accent); background: rgba(0,229,255,0.1);
-    padding: 2px 8px; border: 1px solid rgba(0,229,255,0.2);
-  }
-  .panel-header h2 {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 14px;
-    font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #fff;
-  }
-  .panel-body { padding: 20px 18px; }
-
-  /* FORM SECTIONS */
-  .form-section { margin-bottom: 24px; }
-  .section-label {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
-    letter-spacing: 3px; text-transform: uppercase; color: var(--accent);
-    border-left: 2px solid var(--accent); padding-left: 8px; margin-bottom: 14px;
-  }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .field { margin-bottom: 12px; }
-  .field label {
-    display: block; font-family: 'Share Tech Mono', monospace; font-size: 10px;
-    letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase;
-  }
-  .field input, .field select {
-    width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-    color: var(--text); padding: 9px 12px; font-family: 'Share Tech Mono', monospace; font-size: 12px;
-    border-radius: 1px; outline: none; transition: border-color .2s, background .2s;
-    appearance: none;
-  }
-  .field input:focus, .field select:focus {
-    border-color: var(--accent); background: rgba(0,229,255,0.04);
-  }
-  .field input.error { border-color: var(--error); }
-  .field .err-msg { font-size: 10px; color: var(--error); font-family: 'Share Tech Mono', monospace; margin-top: 4px; }
-
-  /* SUBMIT */
-  .submit-row { display: flex; gap: 12px; margin-top: 8px; }
-  .btn-primary {
-    flex: 1; padding: 13px; background: var(--accent); color: var(--bg);
-    border: none; font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
-    font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-    cursor: pointer; transition: background .2s, transform .1s;
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
-  }
-  .btn-primary:hover { background: #33ecff; }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
-  .btn-secondary {
-    padding: 13px 18px; background: transparent; color: var(--accent2);
-    border: 1px solid var(--accent2); font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; transition: background .2s;
-  }
-  .btn-secondary:hover { background: rgba(255,107,53,0.1); }
-
-  /* RIGHT PANEL - OUTPUT */
-  .output-panel { position: sticky; top: 20px; }
-
-  /* USER LIST */
-  .user-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; max-height: 280px; overflow-y: auto; }
-  .user-card {
-    border: 1px solid var(--border); padding: 12px 14px;
-    background: rgba(255,255,255,0.02); cursor: pointer;
-    transition: border-color .2s, background .2s; position: relative;
-    overflow: hidden;
-  }
-  .user-card.active { border-color: var(--accent); background: rgba(0,229,255,0.06); }
-  .user-card:hover:not(.active) { border-color: var(--muted); background: rgba(255,255,255,0.03); }
-  .user-card-name {
-    font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
-    font-weight: 600; letter-spacing: 1px; color: #fff;
-  }
-  .user-card-id { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
-  .user-card-badge {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    font-family: 'Share Tech Mono', monospace; font-size: 9px;
-    color: var(--green); background: rgba(0,255,157,0.1);
-    padding: 2px 7px; border: 1px solid rgba(0,255,157,0.2);
-  }
-  .user-card-badge.new { color: var(--accent2); background: rgba(255,107,53,0.1); border-color: rgba(255,107,53,0.2); }
-  .empty-state { text-align: center; padding: 32px 16px; }
-  .empty-state p { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); }
-
-  /* JSON PREVIEW */
-  .json-wrap {
-    background: #060810; border: 1px solid var(--border);
-    font-family: 'Share Tech Mono', monospace; font-size: 11px;
-    color: #7a9fc8; line-height: 1.6; max-height: 380px; overflow-y: auto;
-    padding: 14px; white-space: pre-wrap; word-break: break-all;
-  }
-  .json-wrap .k { color: var(--accent); }
-  .json-wrap .s { color: var(--green); }
-  .json-wrap .n { color: var(--accent2); }
-
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--panel); border: 1px solid var(--green); color: var(--green);
-    font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 1px;
-    padding: 12px 24px; z-index: 999; transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .35s;
-    opacity: 0; pointer-events: none;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  .toast.error { border-color: var(--error); color: var(--error); }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); }
-
-  /* DID display */
-  .did-display {
-    font-family: 'Share Tech Mono', monospace; font-size: 10px;
-    color: var(--accent); background: rgba(0,229,255,0.06);
-    border: 1px solid rgba(0,229,255,0.15); padding: 8px 12px; margin-top: -4px; margin-bottom: 14px;
-    word-break: break-all; line-height: 1.5;
-  }
-</style>
-</head>
-<body>
-<div class="scanline"></div>
-<div id="root"></div>
-
-<script type="text/babel">
-const { useState, useCallback, useRef } = React;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const uuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
-};
-const hash = str => {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-  const hex = Math.abs(h).toString(16).padStart(8, '0');
-  return '0x' + hex.repeat(8).substring(0, 64);
-};
-const pad2 = n => String(n).padStart(2, '0');
-const now = () => new Date().toISOString().split('.')[0] + 'Z';
-const buildCredential = (form, uid) => {
-  const id = uid || `did:decentralia:citizen-${Date.now().toString(36)}`;
-  return {
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://www.w3.org/2018/credentials/examples/v1"
-    ],
-    id: `urn:uuid:${uuid()}`,
-    type: ["VerifiableCredential", "GovernmentIdentityCredential"],
-    issuer: {
-      id: "did:decentralia:national-authority",
-      name: "Decentralia National Identity Authority"
-    },
-    issuanceDate: now(),
-    expirationDate: `${new Date().getFullYear() + 10}-${pad2(new Date().getMonth()+1)}-${pad2(new Date().getDate())}T00:00:00Z`,
-    credentialSubject: {
-      id,
-      type: "GovernmentID",
-      givenName: form.givenName,
-      familyName: form.familyName,
-      dateOfBirth: form.dateOfBirth,
-      nationalIdNumber: `GOV-${new Date().getFullYear()}-${String(Math.floor(Math.random()*99999)).padStart(5,'0')}`,
-      address: {
-        streetAddress: form.streetAddress,
-        addressLocality: form.addressLocality,
-        addressRegion: form.addressRegion,
-        postalCode: form.postalCode,
-        addressCountry: "Decentralia"
-      },
-      biometricTemplateHash: hash(`${form.givenName}${form.familyName}${form.dateOfBirth}${Date.now()}`)
-    },
-    proof: {
-      type: "EcdsaSecp256k1Signature2019",
-      created: now(),
-      proofPurpose: "assertionMethod",
-      verificationMethod: "did:decentralia:national-authority#key-1",
-      jws: btoa(`${form.givenName}.${form.familyName}.${uuid()}`).substring(0, 88) + "=="
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decentralia · Resident Registry</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #07090f;
+      --panel: #0c1020;
+      --border: #1a2540;
+      --accent: #00e5ff;
+      --accent2: #ff6b35;
+      --green: #00ff9d;
+      --text: #c8d8f0;
+      --muted: #4a6080;
+      --error: #ff3860;
+      --grid: rgba(0, 229, 255, 0.03);
     }
-  };
-};
 
-// ─── JSON Highlighter ─────────────────────────────────────────────────────────
-const JsonView = ({ data }) => {
-  const hl = JSON.stringify(data, null, 2)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
-    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
-    .replace(/: (\d[\d.]*)/g, ': <span class="n">$1</span>');
-  return <div className="json-wrap" dangerouslySetInnerHTML={{ __html: hl }} />;
-};
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-// ─── Field ─────────────────────────────────────────────────────────────────────
-const Field = ({ label, name, value, onChange, type='text', placeholder='', error }) => (
-  <div className="field">
-    <label>{label}</label>
-    <input
-      type={type} name={name} value={value}
-      onChange={e => onChange(name, e.target.value)}
-      placeholder={placeholder}
-      className={error ? 'error' : ''}
-      autoComplete="off"
-    />
-    {error && <div className="err-msg">{error}</div>}
-  </div>
-);
+    html {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: 15px;
+    }
 
-// ─── Toast ──────────────────────────────────────────────────────────────────
-const useToast = () => {
-  const [state, setState] = useState({ show: false, msg: '', type: 'ok' });
-  const timer = useRef();
-  const show = (msg, type='ok') => {
-    clearTimeout(timer.current);
-    setState({ show: true, msg, type });
-    timer.current = setTimeout(() => setState(s => ({ ...s, show: false })), 3000);
-  };
-  return [state, show];
-};
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-// ─── App ───────────────────────────────────────────────────────────────────────
-const EMPTY = {
-  givenName:'', familyName:'', dateOfBirth:'',
-  streetAddress:'', addressLocality:'', addressRegion:'', postalCode:''
-};
-const VALIDATE = f => {
-  const e = {};
-  if (!f.givenName.trim()) e.givenName = 'Required';
-  if (!f.familyName.trim()) e.familyName = 'Required';
-  if (!f.dateOfBirth) e.dateOfBirth = 'Required';
-  if (!f.streetAddress.trim()) e.streetAddress = 'Required';
-  if (!f.addressLocality.trim()) e.addressLocality = 'Required';
-  if (!f.addressRegion.trim()) e.addressRegion = 'Required';
-  if (!f.postalCode.trim()) e.postalCode = 'Required';
-  return e;
-};
+    /* grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-function App() {
-  const [form, setForm] = useState(EMPTY);
-  const [errors, setErrors] = useState({});
-  const [residents, setResidents] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [toast, showToast] = useToast();
+    .scanline {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.4;
+      animation: scan 6s linear infinite;
+      z-index: 100;
+      pointer-events: none;
+    }
 
-  const handleChange = (name, value) => {
-    setForm(f => ({ ...f, [name]: value }));
-    if (errors[name]) setErrors(e => { const n={...e}; delete n[name]; return n; });
-  };
-  const handleReset = () => { setForm(EMPTY); setErrors({}); };
-
-  const handleSubmit = () => {
-    const errs = VALIDATE(form);
-    if (Object.keys(errs).length) { setErrors(errs); return; }
-    const cred = buildCredential(form);
-    const newResident = { id: cred.credentialSubject.id, credential: cred, new: true };
-    setResidents(r => [newResident, ...r]);
-    setSelected(newResident);
-    postData("http://localhost:8000/register", newResident)
-    showToast(`✓ Resident registered to blockchain`);
-    setForm(EMPTY);
-  };
-
-  async function postData(url, data) {
-    try {
-      const response = await fetch(url, {
-      method: "POST", 
-      headers: {
-        "Content-Type": "application/json", 
-      },
-      body: JSON.stringify({"document": data}), 
-    });
-
-      if (!response.ok)  {
-        throw new Error("HTTP Error");
+    @keyframes scan {
+      from {
+        top: -10px;
       }
 
-      const responseData = await response.json()
-      return responseData;
-    } catch (error) {
-      console.error(error)
+      to {
+        top: 100vh;
+      }
     }
 
-  };
+    /* LAYOUT */
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
 
-  const activeCredential = selected?.credential || null;
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
 
-  return (
-    <div className="app">
-      {/* HEADER */}
-      <div className="header">
-        <div className="logo-block">
-          <div className="logo-hex">DC</div>
-          <div className="logo-text">
-            <h1>Decentralia</h1>
-            <p>Smart City · Resident Registry · v2.6.1</p>
-          </div>
-        </div>
-        <div className="header-status">
-          <div className="live">CHAIN CONNECTED</div>
-          <div>NODE: LEDGERTON-09</div>
-          <div>BLOCK: #{Math.floor(Date.now()/15000).toLocaleString()}</div>
-        </div>
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-hex {
+      width: 52px;
+      height: 52px;
+      background: var(--accent);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 20px;
+      color: var(--bg);
+      font-weight: bold;
+      animation: pulse-hex 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-hex {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 10px rgba(0, 229, 255, 0);
+      }
+    }
+
+    .logo-text h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .logo-text p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 2px;
+    }
+
+    .header-status {
+      text-align: right;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .header-status .live {
+      color: var(--green);
+    }
+
+    .header-status .live::before {
+      content: '● ';
+      animation: blink 1.2s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* MAIN GRID */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* PANELS */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 229, 255, 0.04);
+    }
+
+    .panel-header .tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      background: rgba(0, 229, 255, 0.1);
+      padding: 2px 8px;
+      border: 1px solid rgba(0, 229, 255, 0.2);
+    }
+
+    .panel-header h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .panel-body {
+      padding: 20px 18px;
+    }
+
+    /* FORM SECTIONS */
+    .form-section {
+      margin-bottom: 24px;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-left: 2px solid var(--accent);
+      padding-left: 8px;
+      margin-bottom: 14px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      border-radius: 1px;
+      outline: none;
+      transition: border-color .2s, background .2s;
+      appearance: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.04);
+    }
+
+    .field input.error {
+      border-color: var(--error);
+    }
+
+    .field .err-msg {
+      font-size: 10px;
+      color: var(--error);
+      font-family: 'Share Tech Mono', monospace;
+      margin-top: 4px;
+    }
+
+    /* SUBMIT */
+    .submit-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      padding: 13px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    }
+
+    .btn-primary:hover {
+      background: #33ecff;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      padding: 13px 18px;
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    /* RIGHT PANEL - OUTPUT */
+    .output-panel {
+      position: sticky;
+      top: 20px;
+    }
+
+    /* USER LIST */
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .user-card {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .user-card.active {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.06);
+    }
+
+    .user-card:hover:not(.active) {
+      border-color: var(--muted);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .user-card-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .user-card-id {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .user-card-badge {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--green);
+      background: rgba(0, 255, 157, 0.1);
+      padding: 2px 7px;
+      border: 1px solid rgba(0, 255, 157, 0.2);
+    }
+
+    .user-card-badge.new {
+      color: var(--accent2);
+      background: rgba(255, 107, 53, 0.1);
+      border-color: rgba(255, 107, 53, 0.2);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+    }
+
+    .empty-state p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* JSON PREVIEW */
+    .json-wrap {
+      background: #060810;
+      border: 1px solid var(--border);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: #7a9fc8;
+      line-height: 1.6;
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .json-wrap .k {
+      color: var(--accent);
+    }
+
+    .json-wrap .s {
+      color: var(--green);
+    }
+
+    .json-wrap .n {
+      color: var(--accent2);
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--panel);
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 12px 24px;
+      z-index: 999;
+      transition: transform .35s cubic-bezier(.22, 1, .36, 1), opacity .35s;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    /* DID display */
+    .did-display {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(0, 229, 255, 0.06);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      padding: 8px 12px;
+      margin-top: -4px;
+      margin-bottom: 14px;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="scanline"></div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useCallback, useRef } = React;
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────────
+    const uuid = () => {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    };
+    const hash = str => {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+      const hex = Math.abs(h).toString(16).padStart(8, '0');
+      return '0x' + hex.repeat(8).substring(0, 64);
+    };
+    const pad2 = n => String(n).padStart(2, '0');
+    const now = () => new Date().toISOString().split('.')[0] + 'Z';
+    const buildCredential = (form, uid) => {
+      const id = uid || `did:decentralia:citizen-${Date.now().toString(36)}`;
+      return {
+        "@context": [
+          "https://www.w3.org/2018/credentials/v1",
+          "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        id: `urn:uuid:${uuid()}`,
+        type: ["VerifiableCredential", "GovernmentIdentityCredential"],
+        issuer: {
+          id: "did:decentralia:national-authority",
+          name: "Decentralia National Identity Authority"
+        },
+        issuanceDate: now(),
+        expirationDate: `${new Date().getFullYear() + 10}-${pad2(new Date().getMonth() + 1)}-${pad2(new Date().getDate())}T00:00:00Z`,
+        credentialSubject: {
+          id,
+          type: "GovernmentID",
+          givenName: form.givenName,
+          familyName: form.familyName,
+          dateOfBirth: form.dateOfBirth,
+          nationalIdNumber: `GOV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`,
+          address: {
+            streetAddress: form.streetAddress,
+            addressLocality: form.addressLocality,
+            addressRegion: form.addressRegion,
+            postalCode: form.postalCode,
+            addressCountry: "Decentralia"
+          },
+          biometricTemplateHash: hash(`${form.givenName}${form.familyName}${form.dateOfBirth}${Date.now()}`)
+        },
+        proof: {
+          type: "EcdsaSecp256k1Signature2019",
+          created: now(),
+          proofPurpose: "assertionMethod",
+          verificationMethod: "did:decentralia:national-authority#key-1",
+          jws: btoa(`${form.givenName}.${form.familyName}.${uuid()}`).substring(0, 88) + "=="
+        }
+      };
+    };
+
+    // ─── JSON Highlighter ─────────────────────────────────────────────────────────
+    const JsonView = ({ data }) => {
+      const hl = JSON.stringify(data, null, 2)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+        .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+        .replace(/: (\d[\d.]*)/g, ': <span class="n">$1</span>');
+      return <div className="json-wrap" dangerouslySetInnerHTML={{ __html: hl }} />;
+    };
+
+    // ─── Field ─────────────────────────────────────────────────────────────────────
+    const Field = ({ label, name, value, onChange, type = 'text', placeholder = '', error }) => (
+      <div className="field">
+        <label>{label}</label>
+        <input
+          type={type} name={name} value={value}
+          onChange={e => onChange(name, e.target.value)}
+          placeholder={placeholder}
+          className={error ? 'error' : ''}
+          autoComplete="off"
+        />
+        {error && <div className="err-msg">{error}</div>}
       </div>
+    );
 
-      {/* MAIN GRID */}
-      <div className="main-grid">
-        {/* LEFT: FORM */}
-        <div className="panel">
-          <div className="panel-header">
-            <div className="tag">INPUT</div>
-            <h2>New Resident Onboarding</h2>
+    // ─── Toast ──────────────────────────────────────────────────────────────────
+    const useToast = () => {
+      const [state, setState] = useState({ show: false, msg: '', type: 'ok' });
+      const timer = useRef();
+      const show = (msg, type = 'ok') => {
+        clearTimeout(timer.current);
+        setState({ show: true, msg, type });
+        timer.current = setTimeout(() => setState(s => ({ ...s, show: false })), 3000);
+      };
+      return [state, show];
+    };
+
+    // ─── App ───────────────────────────────────────────────────────────────────────
+    const EMPTY = {
+      givenName: '', familyName: '', dateOfBirth: '',
+      streetAddress: '', addressLocality: '', addressRegion: '', postalCode: ''
+    };
+    const VALIDATE = f => {
+      const e = {};
+      if (!f.givenName.trim()) e.givenName = 'Required';
+      if (!f.familyName.trim()) e.familyName = 'Required';
+      if (!f.dateOfBirth) e.dateOfBirth = 'Required';
+      if (!f.streetAddress.trim()) e.streetAddress = 'Required';
+      if (!f.addressLocality.trim()) e.addressLocality = 'Required';
+      if (!f.addressRegion.trim()) e.addressRegion = 'Required';
+      if (!f.postalCode.trim()) e.postalCode = 'Required';
+      return e;
+    };
+
+    function App() {
+      const [form, setForm] = useState(EMPTY);
+      const [errors, setErrors] = useState({});
+      const [residents, setResidents] = useState([]);
+      const [selected, setSelected] = useState(null);
+      const [toast, showToast] = useToast();
+
+      const handleChange = (name, value) => {
+        setForm(f => ({ ...f, [name]: value }));
+        if (errors[name]) setErrors(e => { const n = { ...e }; delete n[name]; return n; });
+      };
+      const handleReset = () => { setForm(EMPTY); setErrors({}); };
+
+      const [submitting, setSubmitting] = useState(false);
+
+      const handleSubmit = async () => {
+        const errs = VALIDATE(form);
+        if (Object.keys(errs).length) { setErrors(errs); return; }
+        setSubmitting(true);
+        const cred = buildCredential(form);
+        const documentPayload = { id: cred.credentialSubject.id, credential: cred };
+        try {
+          const result = await postData("http://localhost:8000/register", documentPayload);
+          const newResident = {
+            id: cred.credentialSubject.id,
+            credential: cred,
+            new: true,
+            blockchain: result ? {
+              contractAddress: result.contract_address,
+              citizenAddress: result.citizen_address,
+              keccak256Hash: result.keccak256_hash,
+              txHash: result.tx_hash,
+              blockNumber: result.block_number,
+            } : null,
+          };
+          setResidents(r => [newResident, ...r]);
+          setSelected(newResident);
+          showToast(result ? '✓ Resident registered to blockchain' : '⚠ Registered locally — chain TX failed', result ? 'ok' : 'error');
+          setForm(EMPTY);
+        } catch (err) {
+          showToast('✗ Registration failed: ' + err.message, 'error');
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      async function postData(url, data) {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ "document": data }),
+          });
+
+          if (!response.ok) {
+            throw new Error("HTTP Error");
+          }
+
+          const responseData = await response.json()
+          return responseData;
+        } catch (error) {
+          console.error(error)
+        }
+
+      };
+
+      const activeCredential = selected?.credential || null;
+
+      const downloadJsonId = (resident) => {
+        if (!resident || !resident.blockchain) {
+          showToast('✗ No blockchain data — cannot export .jsonId', 'error');
+          return;
+        }
+        const jsonId = {
+          document: { id: resident.id, credential: resident.credential },
+          blockchain: resident.blockchain,
+        };
+        const blob = new Blob([JSON.stringify(jsonId, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const name = `${resident.credential.credentialSubject.givenName}_${resident.credential.credentialSubject.familyName}`.toLowerCase();
+        a.download = `${name}.jsonId`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('✓ Downloaded .jsonId file');
+      };
+
+      return (
+        <div className="app">
+          {/* HEADER */}
+          <div className="header">
+            <div className="logo-block">
+              <div className="logo-hex">DC</div>
+              <div className="logo-text">
+                <h1>Decentralia</h1>
+                <p>Smart City · Resident Registry · v2.6.1</p>
+              </div>
+            </div>
+            <div className="header-status">
+              <div className="live">CHAIN CONNECTED</div>
+              <div>NODE: LEDGERTON-09</div>
+              <div>BLOCK: #{Math.floor(Date.now() / 15000).toLocaleString()}</div>
+            </div>
           </div>
-          <div className="panel-body">
-            <div className="form-section">
-              <div className="section-label">Personal Identity</div>
-              <div className="field-row">
-                <Field label="Given Name" name="givenName" value={form.givenName} onChange={handleChange} placeholder="Alice" error={errors.givenName}/>
-                <Field label="Family Name" name="familyName" value={form.familyName} onChange={handleChange} placeholder="Nakamoto" error={errors.familyName}/>
+
+          {/* MAIN GRID */}
+          <div className="main-grid">
+            {/* LEFT: FORM */}
+            <div className="panel">
+              <div className="panel-header">
+                <div className="tag">INPUT</div>
+                <h2>New Resident Onboarding</h2>
               </div>
-              <Field label="Date of Birth" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} type="date" error={errors.dateOfBirth}/>
-            </div>
-
-            <div className="form-section">
-              <div className="section-label">Residential Address</div>
-              <Field label="Street Address" name="streetAddress" value={form.streetAddress} onChange={handleChange} placeholder="42 Blockchain Avenue" error={errors.streetAddress}/>
-              <div className="field-row">
-                <Field label="City / Locality" name="addressLocality" value={form.addressLocality} onChange={handleChange} placeholder="Ledgerton" error={errors.addressLocality}/>
-                <Field label="Region / State" name="addressRegion" value={form.addressRegion} onChange={handleChange} placeholder="Hashstate" error={errors.addressRegion}/>
-              </div>
-              <Field label="Postal Code" name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="12345" error={errors.postalCode}/>
-            </div>
-
-            <div className="form-section">
-              <div className="section-label">Blockchain Credential Preview</div>
-              <div className="did-display">
-                DID will be auto-generated upon submission<br/>
-                ISSUER: did:decentralia:national-authority<br/>
-                PROOF: EcdsaSecp256k1Signature2019<br/>
-                BIOMETRIC: SHA-256 hash (auto-derived)
-              </div>
-            </div>
-
-            <div className="submit-row">
-              <button className="btn-primary" onClick={handleSubmit}>
-                ⬡ Register to Chain
-              </button>
-              <button className="btn-secondary" onClick={handleReset}>Reset</button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT: OUTPUT */}
-        <div className="output-panel">
-          <div className="panel" style={{ marginBottom: 16 }}>
-            <div className="panel-header">
-              <div className="tag">LEDGER</div>
-              <h2>Registered Residents</h2>
-            </div>
-            <div className="panel-body">
-              {residents.length === 0 ? (
-                <div className="empty-state">
-                  <p>NO RESIDENTS REGISTERED YET</p>
-                  <p style={{ marginTop: 6, opacity: .5 }}>Submit the form to add the first resident</p>
+              <div className="panel-body">
+                <div className="form-section">
+                  <div className="section-label">Personal Identity</div>
+                  <div className="field-row">
+                    <Field label="Given Name" name="givenName" value={form.givenName} onChange={handleChange} placeholder="Alice" error={errors.givenName} />
+                    <Field label="Family Name" name="familyName" value={form.familyName} onChange={handleChange} placeholder="Nakamoto" error={errors.familyName} />
+                  </div>
+                  <Field label="Date of Birth" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} type="date" error={errors.dateOfBirth} />
                 </div>
-              ) : (
-                <div className="user-list">
-                  {residents.map(r => (
-                    <div key={r.id} className={`user-card ${selected?.id===r.id?'active':''}`} onClick={() => setSelected(r)}>
-                      <div className="user-card-name">
-                        {r.credential.credentialSubject.givenName} {r.credential.credentialSubject.familyName}
-                      </div>
-                      <div className="user-card-id">{r.credential.credentialSubject.nationalIdNumber}</div>
-                      <div className={`user-card-badge ${r.new ? 'new' : ''}`}>{r.new ? 'NEW' : 'ACTIVE'}</div>
+
+                <div className="form-section">
+                  <div className="section-label">Residential Address</div>
+                  <Field label="Street Address" name="streetAddress" value={form.streetAddress} onChange={handleChange} placeholder="42 Blockchain Avenue" error={errors.streetAddress} />
+                  <div className="field-row">
+                    <Field label="City / Locality" name="addressLocality" value={form.addressLocality} onChange={handleChange} placeholder="Ledgerton" error={errors.addressLocality} />
+                    <Field label="Region / State" name="addressRegion" value={form.addressRegion} onChange={handleChange} placeholder="Hashstate" error={errors.addressRegion} />
+                  </div>
+                  <Field label="Postal Code" name="postalCode" value={form.postalCode} onChange={handleChange} placeholder="12345" error={errors.postalCode} />
+                </div>
+
+                <div className="form-section">
+                  <div className="section-label">Blockchain Credential Preview</div>
+                  <div className="did-display">
+                    DID will be auto-generated upon submission<br />
+                    ISSUER: did:decentralia:national-authority<br />
+                    PROOF: EcdsaSecp256k1Signature2019<br />
+                    BIOMETRIC: SHA-256 hash (auto-derived)
+                  </div>
+                </div>
+
+                <div className="submit-row">
+                  <button className="btn-primary" onClick={handleSubmit} disabled={submitting}>
+                    {submitting ? '⏳ Registering...' : '⬡ Register to Chain'}
+                  </button>
+                  <button className="btn-secondary" onClick={handleReset}>Reset</button>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: OUTPUT */}
+            <div className="output-panel">
+              <div className="panel" style={{ marginBottom: 16 }}>
+                <div className="panel-header">
+                  <div className="tag">LEDGER</div>
+                  <h2>Registered Residents</h2>
+                </div>
+                <div className="panel-body">
+                  {residents.length === 0 ? (
+                    <div className="empty-state">
+                      <p>NO RESIDENTS REGISTERED YET</p>
+                      <p style={{ marginTop: 6, opacity: .5 }}>Submit the form to add the first resident</p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="user-list">
+                      {residents.map(r => (
+                        <div key={r.id} className={`user-card ${selected?.id === r.id ? 'active' : ''}`} onClick={() => setSelected(r)}>
+                          <div className="user-card-name">
+                            {r.credential.credentialSubject.givenName} {r.credential.credentialSubject.familyName}
+                          </div>
+                          <div className="user-card-id">{r.credential.credentialSubject.nationalIdNumber}</div>
+                          <div className={`user-card-badge ${r.new ? 'new' : ''}`}>{r.new ? 'NEW' : 'ACTIVE'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {activeCredential && (
+                <div className="panel">
+                  <div className="panel-header">
+                    <div className="tag">VC</div>
+                    <h2>Verifiable Credential</h2>
+                  </div>
+                  <div className="panel-body" style={{ padding: '14px 14px' }}>
+                    <JsonView data={activeCredential} />
+                    {selected?.blockchain && (
+                      <button
+                        className="btn-primary"
+                        style={{ marginTop: 12, width: '100%', fontSize: 13 }}
+                        onClick={() => downloadJsonId(selected)}
+                      >
+                        ⬡ Download .jsonId
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {activeCredential && (
-            <div className="panel">
-              <div className="panel-header">
-                <div className="tag">VC</div>
-                <h2>Verifiable Credential</h2>
-              </div>
-              <div className="panel-body" style={{ padding: '14px 14px' }}>
-                <JsonView data={activeCredential} />
-              </div>
-            </div>
-          )}
+          {/* TOAST */}
+          <div className={`toast ${toast.show ? 'show' : ''} ${toast.type === 'error' ? 'error' : ''}`}>
+            {toast.msg}
+          </div>
         </div>
-      </div>
+      );
+    }
 
-      {/* TOAST */}
-      <div className={`toast ${toast.show ? 'show' : ''} ${toast.type === 'error' ? 'error' : ''}`}>
-        {toast.msg}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
+
 </html>

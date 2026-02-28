@@ -1,804 +1,1734 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CivicChain POS — Smart City Payment Terminal</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicChain POS — Smart City Payment Terminal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
 
-  :root {
-    --bg: #050a0f;
-    --panel: #0a1520;
-    --panel2: #0d1e2e;
-    --border: #1a3a55;
-    --accent: #00d4ff;
-    --accent2: #00ff9d;
-    --accent3: #ff6b35;
-    --warn: #ffcc00;
-    --text: #c8e6f5;
-    --text-dim: #5a8aaa;
-    --glow: 0 0 20px rgba(0,212,255,0.3);
-    --glow2: 0 0 20px rgba(0,255,157,0.3);
-  }
+        :root {
+            --bg: #050a0f;
+            --panel: #0a1520;
+            --panel2: #0d1e2e;
+            --border: #1a3a55;
+            --accent: #00d4ff;
+            --accent2: #00ff9d;
+            --accent3: #ff6b35;
+            --warn: #ffcc00;
+            --error: #ff3860;
+            --text: #c8e6f5;
+            --text-dim: #5a8aaa;
+            --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+            --glow2: 0 0 20px rgba(0, 255, 157, 0.3);
+        }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(0,100,180,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.05) 0%, transparent 50%);
-  }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(0, 100, 180, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+        }
 
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
 
-  .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-  /* Header */
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 24px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    margin-bottom: 20px;
-    clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 0 100%);
-  }
-  .logo { display: flex; align-items: center; gap: 14px; }
-  .logo-icon {
-    width: 44px; height: 44px;
-    border: 2px solid var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron', monospace;
-    font-size: 18px; font-weight: 900;
-    color: var(--accent);
-    box-shadow: var(--glow);
-    position: relative;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    background: rgba(0,212,255,0.05);
-  }
-  .logo-text { font-family: 'Orbitron', monospace; }
-  .logo-text h1 { font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: 3px; }
-  .logo-text span { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; font-family: 'Share Tech Mono'; }
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            margin-bottom: 20px;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 0 100%);
+        }
 
-  .header-status { display: flex; gap: 24px; align-items: center; }
-  .status-item { text-align: right; }
-  .status-label { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; font-family: 'Share Tech Mono'; }
-  .status-value { font-size: 14px; font-weight: 600; color: var(--accent2); font-family: 'Share Tech Mono'; }
-  .status-value.warn { color: var(--warn); }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
 
-  .node-indicator {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 16px;
-    border: 1px solid var(--accent2);
-    background: rgba(0,255,157,0.05);
-    font-family: 'Share Tech Mono'; font-size: 12px; color: var(--accent2);
-  }
-  .pulse {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent2);
-    box-shadow: 0 0 8px var(--accent2);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--accent);
+            box-shadow: var(--glow);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            background: rgba(0, 212, 255, 0.05);
+        }
 
-  /* Main Layout */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 20px;
-    min-height: calc(100vh - 160px);
-  }
+        .logo-text {
+            font-family: 'Orbitron', monospace;
+        }
 
-  /* Panel base */
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    padding: 24px;
-  }
-  .panel-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 11px; letter-spacing: 4px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .panel-title::before {
-    content: '';
-    width: 4px; height: 14px;
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-  }
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 3px;
+        }
 
-  /* Left Side */
-  .left-col { display: flex; flex-direction: column; gap: 20px; }
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono';
+        }
 
-  /* ID Scanner */
-  .scanner-panel {
-    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
-  }
+        .header-status {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
 
-  .scan-area {
-    border: 1px dashed var(--border);
-    padding: 30px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-    background: rgba(0,212,255,0.02);
-  }
-  .scan-area:hover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
-  .scan-area.scanning { border-color: var(--accent); animation: scanPulse 1.5s infinite; }
-  .scan-area.verified { border-color: var(--accent2); background: rgba(0,255,157,0.05); }
-  .scan-area.failed { border-color: #ff4444; background: rgba(255,68,68,0.05); animation: none; }
+        .status-item {
+            text-align: right;
+        }
 
-  @keyframes scanPulse {
-    0%, 100% { box-shadow: inset 0 0 20px rgba(0,212,255,0.1); }
-    50% { box-shadow: inset 0 0 40px rgba(0,212,255,0.2); }
-  }
+        .status-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono';
+        }
 
-  .scan-line {
-    position: absolute; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    top: -2px;
-    animation: scanLine 2s linear infinite;
-    display: none;
-  }
-  .scanning .scan-line { display: block; }
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent2);
+            font-family: 'Share Tech Mono';
+        }
 
-  @keyframes scanLine {
-    0% { top: 0; opacity: 1; }
-    100% { top: 100%; opacity: 0.3; }
-  }
+        .status-value.warn {
+            color: var(--warn);
+        }
 
-  .scan-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.6; }
-  .scan-instruction { font-size: 16px; font-weight: 500; color: var(--text-dim); }
-  .scan-sub { font-family: 'Share Tech Mono'; font-size: 11px; color: var(--text-dim); margin-top: 6px; letter-spacing: 1px; }
+        .node-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid var(--accent2);
+            background: rgba(0, 255, 157, 0.05);
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            color: var(--accent2);
+        }
 
-  .citizen-card {
-    display: none;
-    background: linear-gradient(135deg, var(--panel2) 0%, rgba(0,30,50,0.8) 100%);
-    border: 1px solid var(--accent);
-    padding: 20px;
-    box-shadow: var(--glow);
-  }
-  .citizen-card.show { display: flex; gap: 20px; align-items: center; }
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent2);
+            box-shadow: 0 0 8px var(--accent2);
+            animation: pulse 2s infinite;
+        }
 
-  .citizen-avatar {
-    width: 64px; height: 64px; flex-shrink: 0;
-    border: 2px solid var(--accent);
-    background: rgba(0,212,255,0.1);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  }
-  .citizen-info { flex: 1; }
-  .citizen-name { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .citizen-id { font-family: 'Share Tech Mono'; font-size: 11px; color: var(--text-dim); margin-bottom: 8px; }
-  .citizen-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-  .badge {
-    padding: 3px 10px;
-    border: 1px solid;
-    font-size: 10px; font-weight: 600; letter-spacing: 1px;
-    text-transform: uppercase; font-family: 'Share Tech Mono';
-  }
-  .badge.verified { border-color: var(--accent2); color: var(--accent2); background: rgba(0,255,157,0.08); }
-  .badge.resident { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
-  .badge.premium { border-color: var(--warn); color: var(--warn); background: rgba(255,204,0,0.08); }
+        @keyframes pulse {
 
-  .citizen-wallet { text-align: right; }
-  .wallet-label { font-size: 10px; color: var(--text-dim); font-family: 'Share Tech Mono'; letter-spacing: 1px; }
-  .wallet-balance { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 700; color: var(--accent2); }
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
 
-  /* Products Grid */
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-  .product-btn {
-    background: var(--panel2);
-    border: 1px solid var(--border);
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-  }
-  .product-btn::before {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 3px; height: 100%;
-    background: var(--accent);
-    transform: scaleY(0); transform-origin: bottom;
-    transition: transform 0.2s;
-  }
-  .product-btn:hover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
-  .product-btn:hover::before { transform: scaleY(1); }
-  .product-btn:active { transform: scale(0.98); }
-  .product-emoji { font-size: 24px; margin-bottom: 8px; }
-  .product-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .product-price { font-family: 'Share Tech Mono'; font-size: 16px; color: var(--accent2); font-weight: 700; }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
 
-  /* Right Col - Cart / Checkout */
-  .right-col { display: flex; flex-direction: column; gap: 20px; }
+        /* Main Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            min-height: calc(100vh - 160px);
+        }
 
-  .cart-panel {
-    flex: 1;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
-  }
+        /* Panel base */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 24px;
+        }
 
-  .cart-items { min-height: 200px; }
-  .empty-cart {
-    text-align: center; padding: 40px 20px;
-    color: var(--text-dim); font-family: 'Share Tech Mono'; font-size: 12px;
-    letter-spacing: 1px;
-  }
-  .empty-cart .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-  .cart-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(26,58,85,0.5);
-    animation: slideIn 0.2s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(10px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  .cart-item-emoji { font-size: 20px; width: 28px; text-align: center; }
-  .cart-item-info { flex: 1; }
-  .cart-item-name { font-size: 14px; font-weight: 600; }
-  .cart-item-price { font-family: 'Share Tech Mono'; font-size: 12px; color: var(--text-dim); }
-  .cart-item-qty {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .qty-btn {
-    width: 24px; height: 24px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text); cursor: pointer;
-    font-size: 14px; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .qty-num { font-family: 'Share Tech Mono'; font-size: 14px; min-width: 20px; text-align: center; }
-  .cart-item-total { font-family: 'Share Tech Mono'; font-size: 14px; font-weight: 700; color: var(--accent2); min-width: 60px; text-align: right; }
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 14px;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
 
-  /* Cart Summary */
-  .cart-summary { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 12px; }
-  .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: var(--text-dim); font-family: 'Share Tech Mono'; }
-  .summary-row.total { color: var(--text); font-size: 18px; font-weight: 700; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 4px; }
-  .summary-row.total .total-val { color: var(--accent2); font-family: 'Orbitron', monospace; font-size: 22px; }
+        /* Left Side */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-  /* Checkout Button */
-  .checkout-btn {
-    width: 100%;
-    padding: 18px;
-    background: transparent;
-    border: 2px solid var(--accent2);
-    color: var(--accent2);
-    font-family: 'Orbitron', monospace;
-    font-size: 14px; font-weight: 700; letter-spacing: 3px;
-    cursor: pointer;
-    position: relative; overflow: hidden;
-    transition: all 0.3s;
-    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
-  }
-  .checkout-btn::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: var(--accent2);
-    transform: scaleX(0); transform-origin: left;
-    transition: transform 0.3s;
-    z-index: -1;
-  }
-  .checkout-btn:hover { color: var(--bg); box-shadow: var(--glow2); }
-  .checkout-btn:hover::before { transform: scaleX(1); }
-  .checkout-btn:disabled { border-color: var(--border); color: var(--text-dim); cursor: not-allowed; }
-  .checkout-btn:disabled::before { display: none; }
-  .checkout-btn:disabled:hover { color: var(--text-dim); box-shadow: none; }
+        /* ID Scanner */
+        .scanner-panel {
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+        }
 
-  /* Blockchain TX Panel */
-  .tx-panel { }
-  .tx-list { font-family: 'Share Tech Mono'; font-size: 11px; }
-  .tx-entry {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(26,58,85,0.4);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px;
-    animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .tx-hash { color: var(--accent); font-size: 10px; }
-  .tx-status { font-size: 10px; }
-  .tx-status.confirmed { color: var(--accent2); }
-  .tx-status.pending { color: var(--warn); }
-  .tx-detail { color: var(--text-dim); font-size: 10px; grid-column: 1/-1; }
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            padding: 36px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 212, 255, 0.02);
+        }
 
-  /* Modal Overlay */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(5,10,15,0.92);
-    z-index: 100;
-    align-items: center; justify-content: center;
-  }
-  .modal-overlay.show { display: flex; }
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
 
-  .modal {
-    background: var(--panel);
-    border: 1px solid var(--accent);
-    box-shadow: var(--glow), 0 0 80px rgba(0,212,255,0.1);
-    width: 460px;
-    padding: 40px;
-    position: relative;
-    clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
-    animation: modalIn 0.3s ease;
-  }
-  @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
+        .upload-area.drag-over {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.08);
+        }
 
-  .modal-title { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 8px; letter-spacing: 2px; }
-  .modal-sub { font-family: 'Share Tech Mono'; font-size: 12px; color: var(--text-dim); margin-bottom: 30px; }
+        .upload-area.verifying {
+            border-color: var(--accent);
+            animation: scanPulse 1.5s infinite;
+        }
 
-  .processing-steps { margin: 24px 0; }
-  .step {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(26,58,85,0.4);
-    opacity: 0.3; transition: opacity 0.4s;
-  }
-  .step.active { opacity: 1; }
-  .step.done { opacity: 0.7; }
-  .step-icon { width: 32px; height: 32px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; transition: all 0.3s; }
-  .step.active .step-icon { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px rgba(0,212,255,0.3); animation: spin 1s linear infinite; }
-  .step.done .step-icon { border-color: var(--accent2); color: var(--accent2); animation: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .step-text { }
-  .step-label { font-size: 14px; font-weight: 600; }
-  .step-detail { font-family: 'Share Tech Mono'; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+        .upload-area.verified {
+            border-color: var(--accent2);
+            background: rgba(0, 255, 157, 0.05);
+            border-style: solid;
+            cursor: default;
+        }
 
-  .success-display { display: none; text-align: center; padding: 20px 0; }
-  .success-display.show { display: block; }
-  .success-hex {
-    width: 80px; height: 80px; margin: 0 auto 20px;
-    background: rgba(0,255,157,0.1);
-    border: 2px solid var(--accent2);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px;
-    box-shadow: 0 0 30px rgba(0,255,157,0.3);
-    animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  @keyframes successPop {
-    from { transform: scale(0); }
-    to { transform: scale(1); }
-  }
-  .success-title { font-family: 'Orbitron', monospace; font-size: 20px; color: var(--accent2); margin-bottom: 8px; }
-  .success-hash { font-family: 'Share Tech Mono'; font-size: 11px; color: var(--text-dim); margin-bottom: 20px; }
-  .success-amount { font-family: 'Orbitron', monospace; font-size: 36px; font-weight: 900; color: var(--accent2); margin-bottom: 4px; }
-  .success-unit { font-family: 'Share Tech Mono'; font-size: 12px; color: var(--text-dim); }
+        .upload-area.unverified {
+            border-color: var(--error);
+            background: rgba(255, 56, 96, 0.05);
+            border-style: solid;
+            cursor: default;
+        }
 
-  .modal-close {
-    width: 100%; margin-top: 24px;
-    padding: 14px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim); font-family: 'Rajdhani', sans-serif;
-    font-size: 14px; font-weight: 600; letter-spacing: 2px;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .modal-close:hover { border-color: var(--accent); color: var(--accent); }
+        .upload-area.api-error {
+            border-color: var(--warn);
+            background: rgba(255, 204, 0, 0.05);
+            border-style: solid;
+            cursor: default;
+        }
 
-  /* Chain Visualization */
-  .chain-viz {
-    display: flex; align-items: center; gap: 0;
-    overflow: hidden; padding: 12px 0;
-  }
-  .chain-block {
-    flex-shrink: 0;
-    width: 52px; height: 40px;
-    border: 1px solid var(--border);
-    background: var(--panel2);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Share Tech Mono'; font-size: 9px; color: var(--text-dim);
-    position: relative; transition: all 0.3s;
-    font-size: 8px;
-  }
-  .chain-block.new-block {
-    border-color: var(--accent2);
-    background: rgba(0,255,157,0.08);
-    color: var(--accent2);
-    box-shadow: 0 0 12px rgba(0,255,157,0.2);
-    animation: blockPop 0.4s ease;
-  }
-  @keyframes blockPop {
-    from { transform: scaleY(0); }
-    to { transform: scaleY(1); }
-  }
-  .chain-connector {
-    width: 16px; height: 2px;
-    background: var(--border);
-    flex-shrink: 0;
-  }
+        @keyframes scanPulse {
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); }
+            0%,
+            100% {
+                box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.1);
+            }
 
-  /* Responsive */
-  @media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; }
-    .products-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-</style>
+            50% {
+                box-shadow: inset 0 0 40px rgba(0, 212, 255, 0.2);
+            }
+        }
+
+        .scan-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            top: -2px;
+            animation: scanLine 2s linear infinite;
+            display: none;
+        }
+
+        .verifying .scan-line {
+            display: block;
+        }
+
+        @keyframes scanLine {
+            0% {
+                top: 0;
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0.3;
+            }
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        .upload-instruction {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-dim);
+        }
+
+        .upload-sub {
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        /* Verification result */
+        .verify-result {
+            display: none;
+            margin-top: 16px;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.3);
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+            line-height: 1.8;
+            color: var(--text-dim);
+        }
+
+        .verify-result.show {
+            display: block;
+        }
+
+        .verify-result .label {
+            color: var(--text-dim);
+        }
+
+        .verify-result .val {
+            color: var(--text);
+        }
+
+        .verify-result .val.hash {
+            color: var(--accent);
+            word-break: break-all;
+        }
+
+        .verify-result .val.match {
+            color: var(--accent2);
+        }
+
+        .verify-result .val.no-match {
+            color: var(--error);
+        }
+
+        /* Status badge large */
+        .verify-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        .verify-badge.pass {
+            color: var(--accent2);
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+        }
+
+        .verify-badge.fail {
+            color: var(--error);
+            background: rgba(255, 56, 96, 0.1);
+            border: 1px solid rgba(255, 56, 96, 0.3);
+        }
+
+        .verify-badge.err {
+            color: var(--warn);
+            background: rgba(255, 204, 0, 0.1);
+            border: 1px solid rgba(255, 204, 0, 0.3);
+        }
+
+        /* Citizen card */
+        .citizen-card {
+            display: none;
+            background: linear-gradient(135deg, var(--panel2) 0%, rgba(0, 30, 50, 0.8) 100%);
+            border: 1px solid var(--accent);
+            padding: 20px;
+            box-shadow: var(--glow);
+            margin-top: 16px;
+        }
+
+        .citizen-card.show {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .citizen-card.unverified {
+            border-color: var(--error);
+            box-shadow: 0 0 20px rgba(255, 56, 96, 0.2);
+        }
+
+        .citizen-avatar {
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+            border: 2px solid var(--accent);
+            background: rgba(0, 212, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        .citizen-card.unverified .citizen-avatar {
+            border-color: var(--error);
+            background: rgba(255, 56, 96, 0.1);
+        }
+
+        .citizen-info {
+            flex: 1;
+        }
+
+        .citizen-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .citizen-card.unverified .citizen-name {
+            color: var(--error);
+        }
+
+        .citizen-id {
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .citizen-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border: 1px solid;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono';
+        }
+
+        .badge.verified {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            background: rgba(0, 255, 157, 0.08);
+        }
+
+        .badge.unverified {
+            border-color: var(--error);
+            color: var(--error);
+            background: rgba(255, 56, 96, 0.08);
+        }
+
+        .badge.resident {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        .badge.onchain {
+            border-color: var(--warn);
+            color: var(--warn);
+            background: rgba(255, 204, 0, 0.08);
+        }
+
+        .citizen-wallet {
+            text-align: right;
+        }
+
+        .wallet-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono';
+            letter-spacing: 1px;
+        }
+
+        .wallet-balance {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            word-break: break-all;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .product-btn {
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--accent);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.2s;
+        }
+
+        .product-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .product-btn:hover:not(:disabled)::before {
+            transform: scaleY(1);
+        }
+
+        .product-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .product-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .product-emoji {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            font-family: 'Share Tech Mono';
+            font-size: 16px;
+            color: var(--accent2);
+            font-weight: 700;
+        }
+
+        /* Right Col */
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cart-panel {
+            flex: 1;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+        }
+
+        .cart-items {
+            min-height: 200px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .empty-cart .empty-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(26, 58, 85, 0.5);
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .cart-item-emoji {
+            font-size: 20px;
+            width: 28px;
+            text-align: center;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .cart-item-price {
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .qty-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .qty-num {
+            font-family: 'Share Tech Mono';
+            font-size: 14px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .cart-item-total {
+            font-family: 'Share Tech Mono';
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent2);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono';
+        }
+
+        .summary-row.total {
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 700;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            margin-top: 4px;
+        }
+
+        .summary-row.total .total-val {
+            color: var(--accent2);
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+        }
+
+        /* Checkout Button */
+        .checkout-btn {
+            width: 100%;
+            padding: 18px;
+            background: transparent;
+            border: 2px solid var(--accent2);
+            color: var(--accent2);
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+        }
+
+        .checkout-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent2);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+            z-index: -1;
+        }
+
+        .checkout-btn:hover:not(:disabled) {
+            color: var(--bg);
+            box-shadow: var(--glow2);
+        }
+
+        .checkout-btn:hover:not(:disabled)::before {
+            transform: scaleX(1);
+        }
+
+        .checkout-btn:disabled {
+            border-color: var(--border);
+            color: var(--text-dim);
+            cursor: not-allowed;
+        }
+
+        .checkout-btn:disabled::before {
+            display: none;
+        }
+
+        /* TX Panel */
+        .tx-panel {}
+
+        .tx-list {
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+        }
+
+        .tx-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(26, 58, 85, 0.4);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 4px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .tx-hash {
+            color: var(--accent);
+            font-size: 10px;
+        }
+
+        .tx-status {
+            font-size: 10px;
+        }
+
+        .tx-status.confirmed {
+            color: var(--accent2);
+        }
+
+        .tx-status.pending {
+            color: var(--warn);
+        }
+
+        .tx-detail {
+            color: var(--text-dim);
+            font-size: 10px;
+            grid-column: 1/-1;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 10, 15, 0.92);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--accent);
+            box-shadow: var(--glow), 0 0 80px rgba(0, 212, 255, 0.1);
+            width: 460px;
+            padding: 40px;
+            position: relative;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .modal-sub {
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+        }
+
+        .processing-steps {
+            margin: 24px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(26, 58, 85, 0.4);
+            opacity: 0.3;
+            transition: opacity 0.4s;
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        .step.done {
+            opacity: 0.7;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-icon {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+            animation: spin 1s linear infinite;
+        }
+
+        .step.done .step-icon {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            animation: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .step-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .step-detail {
+            font-family: 'Share Tech Mono';
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .success-display {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .success-display.show {
+            display: block;
+        }
+
+        .success-hex {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(0, 255, 157, 0.1);
+            border: 2px solid var(--accent2);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.3);
+            animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes successPop {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            color: var(--accent2);
+            margin-bottom: 8px;
+        }
+
+        .success-hash {
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .success-amount {
+            font-family: 'Orbitron', monospace;
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--accent2);
+            margin-bottom: 4px;
+        }
+
+        .success-unit {
+            font-family: 'Share Tech Mono';
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .modal-close {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Chain Visualization */
+        .chain-viz {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow: hidden;
+            padding: 12px 0;
+        }
+
+        .chain-block {
+            flex-shrink: 0;
+            width: 52px;
+            height: 40px;
+            border: 1px solid var(--border);
+            background: var(--panel2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Share Tech Mono';
+            font-size: 8px;
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.3;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .chain-block.new-block {
+            border-color: var(--accent2);
+            background: rgba(0, 255, 157, 0.08);
+            color: var(--accent2);
+            box-shadow: 0 0 12px rgba(0, 255, 157, 0.2);
+            animation: blockPop 0.4s ease;
+        }
+
+        @keyframes blockPop {
+            from {
+                transform: scaleY(0);
+            }
+
+            to {
+                transform: scaleY(1);
+            }
+        }
+
+        .chain-connector {
+            width: 16px;
+            height: 2px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        /* JSON Preview */
+        .json-preview {
+            display: none;
+            margin-top: 16px;
+            background: #060810;
+            border: 1px solid var(--border);
+            font-family: 'Share Tech Mono';
+            font-size: 10px;
+            color: #7a9fc8;
+            line-height: 1.5;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .json-preview.show {
+            display: block;
+        }
+
+        .json-preview .k {
+            color: var(--accent);
+        }
+
+        .json-preview .s {
+            color: var(--accent2);
+        }
+
+        .json-preview .n {
+            color: var(--accent3);
+        }
+
+        /* Reset button */
+        .reset-btn {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-family: 'Share Tech Mono';
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .reset-btn.show {
+            display: block;
+        }
+
+        .reset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="app">
+    <div class="app">
 
-  <!-- Header -->
-  <header>
-    <div class="logo">
-      <div class="logo-icon">⬡</div>
-      <div class="logo-text">
-        <h1>CIVICCHAIN</h1>
-        <span>Smart City Point of Sale Terminal v2.4</span>
-      </div>
-    </div>
-    <div class="header-status">
-      <div class="status-item">
-        <div class="status-label">Block Height</div>
-        <div class="status-value" id="blockHeight">1,048,592</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">Active Nodes</div>
-        <div class="status-value">247</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">Avg Confirm</div>
-        <div class="status-value warn">1.4s</div>
-      </div>
-      <div class="node-indicator">
-        <div class="pulse"></div>
-        NODE LIVE · DISTRICT 7
-      </div>
-    </div>
-  </header>
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">⬡</div>
+                <div class="logo-text">
+                    <h1>CIVICCHAIN</h1>
+                    <span>Smart City Point of Sale Terminal v2.4</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-item">
+                    <div class="status-label">Block Height</div>
+                    <div class="status-value" id="blockHeight">1,048,592</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Active Nodes</div>
+                    <div class="status-value">247</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Avg Confirm</div>
+                    <div class="status-value warn">1.4s</div>
+                </div>
+                <div class="node-indicator">
+                    <div class="pulse"></div>
+                    NODE LIVE · DISTRICT 7
+                </div>
+            </div>
+        </header>
 
-  <div class="main-grid">
+        <div class="main-grid">
 
-    <!-- Left Column -->
-    <div class="left-col">
+            <!-- Left Column -->
+            <div class="left-col">
 
-      <!-- ID Scanner Panel -->
-      <div class="panel scanner-panel">
-        <div class="panel-title">Citizen Identity Verification</div>
+                <!-- Identity Verification Panel -->
+                <div class="panel scanner-panel">
+                    <div class="panel-title">Citizen Identity Verification</div>
 
-        <div class="scan-area" id="scanArea" onclick="startScan()">
-          <div class="scan-line"></div>
-          <div class="scan-icon" id="scanIcon">🪪</div>
-          <div class="scan-instruction" id="scanInstruction">Tap to Scan Citizen ID</div>
-          <div class="scan-sub" id="scanSub">NFC · QR · Biometric supported via CivicChain protocol</div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="scan-line"></div>
+                        <div class="upload-icon" id="uploadIcon">📁</div>
+                        <div class="upload-instruction" id="uploadInstruction">Upload your .jsonId credential file</div>
+                        <div class="upload-sub" id="uploadSub">Drop file here or click to browse · Verifies identity
+                            against the blockchain</div>
+                        <input type="file" class="upload-input" id="fileInput" accept=".jsonId,.json">
+                    </div>
+
+                    <!-- Verification result details -->
+                    <div class="verify-result" id="verifyResult">
+                        <div id="verifyBadgeWrap"></div>
+                        <div><span class="label">KECCAK-256 HASH: </span><span class="val hash" id="vHash">—</span>
+                        </div>
+                        <div><span class="label">ON-CHAIN HASH: </span><span class="val hash" id="vOnChain">—</span>
+                        </div>
+                        <div><span class="label">CONTRACT: </span><span class="val hash" id="vContract">—</span></div>
+                        <div><span class="label">CITIZEN ADDR: </span><span class="val hash" id="vCitizen">—</span>
+                        </div>
+                        <div><span class="label">MATCH: </span><span class="val" id="vMatch">—</span></div>
+                    </div>
+
+                    <!-- Citizen Card -->
+                    <div class="citizen-card" id="citizenCard">
+                        <div class="citizen-avatar" id="citizenAvatar">👤</div>
+                        <div class="citizen-info">
+                            <div class="citizen-name" id="citizenName">—</div>
+                            <div class="citizen-id" id="citizenIdText">—</div>
+                            <div class="citizen-badges" id="citizenBadges"></div>
+                        </div>
+                        <div class="citizen-wallet">
+                            <div class="wallet-label">Contract</div>
+                            <div class="wallet-balance" id="walletContract" style="font-size:10px">—</div>
+                        </div>
+                    </div>
+
+                    <!-- JSON Preview -->
+                    <div class="json-preview" id="jsonPreview"></div>
+
+                    <button class="reset-btn" id="resetBtn" onclick="resetVerification()">⟳ RESET · VERIFY ANOTHER
+                        IDENTITY</button>
+                </div>
+
+                <!-- Products -->
+                <div class="panel">
+                    <div class="panel-title">Products & Services</div>
+                    <div class="products-grid" id="productsGrid"></div>
+                </div>
+
+                <!-- Chain Visualization -->
+                <div class="panel">
+                    <div class="panel-title">Live Blockchain — District 7 Node</div>
+                    <div class="chain-viz" id="chainViz"></div>
+                    <div style="font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);margin-top:8px;">
+                        Monitoring chain... Last confirmed block: <span id="lastBlock">—</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-col">
+
+                <!-- Cart -->
+                <div class="panel cart-panel" style="flex:1">
+                    <div class="panel-title">Transaction Cart</div>
+                    <div class="cart-items" id="cartItems">
+                        <div class="empty-cart" id="emptyCart">
+                            <div class="empty-icon">📦</div>
+                            No items added.<br>Select products to begin.
+                        </div>
+                    </div>
+                    <div class="cart-summary" id="cartSummary" style="display:none">
+                        <div class="summary-row"><span>Subtotal</span><span id="subtotal">0.00 ◈</span></div>
+                        <div class="summary-row"><span>City Services Tax (3%)</span><span id="taxAmount">0.00 ◈</span>
+                        </div>
+                        <div class="summary-row total"><span>TOTAL</span><span class="total-val" id="totalAmount">0.00
+                                ◈</span></div>
+                    </div>
+                </div>
+
+                <!-- Checkout -->
+                <button class="checkout-btn" id="checkoutBtn" onclick="initiateCheckout()" disabled>
+                    ⬡ AUTHORIZE PAYMENT
+                </button>
+
+                <!-- Recent Transactions -->
+                <div class="panel tx-panel">
+                    <div class="panel-title">Recent Transactions</div>
+                    <div class="tx-list" id="txList">
+                        <div style="color:var(--text-dim);font-size:11px;padding:12px 0">No transactions this session.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-
-        <div class="citizen-card" id="citizenCard">
-          <div class="citizen-avatar" id="citizenAvatar">👤</div>
-          <div class="citizen-info">
-            <div class="citizen-name" id="citizenName">—</div>
-            <div class="citizen-id" id="citizenIdText">ID: —</div>
-            <div class="citizen-badges" id="citizenBadges"></div>
-          </div>
-          <div class="citizen-wallet">
-            <div class="wallet-label">CivicWallet Balance</div>
-            <div class="wallet-balance" id="walletBalance">0.00 ◈</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Products -->
-      <div class="panel">
-        <div class="panel-title">Products & Services</div>
-        <div class="products-grid" id="productsGrid"></div>
-      </div>
-
-      <!-- Chain Visualization -->
-      <div class="panel">
-        <div class="panel-title">Live Blockchain — District 7 Node</div>
-        <div class="chain-viz" id="chainViz"></div>
-        <div style="font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);margin-top:8px;" id="chainStatus">
-          Monitoring chain... Last confirmed block: <span id="lastBlock">—</span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Right Column -->
-    <div class="right-col">
-
-      <!-- Cart -->
-      <div class="panel cart-panel" style="flex:1">
-        <div class="panel-title">Transaction Cart</div>
-
-        <div class="cart-items" id="cartItems">
-          <div class="empty-cart" id="emptyCart">
-            <div class="empty-icon">📦</div>
-            No items added.<br>Select products to begin.
-          </div>
-        </div>
-
-        <div class="cart-summary" id="cartSummary" style="display:none">
-          <div class="summary-row"><span>Subtotal</span><span id="subtotal">0.00 ◈</span></div>
-          <div class="summary-row"><span>City Services Tax (3%)</span><span id="taxAmount">0.00 ◈</span></div>
-          <div class="summary-row total"><span>TOTAL</span><span class="total-val" id="totalAmount">0.00 ◈</span></div>
-        </div>
-      </div>
-
-      <!-- Checkout -->
-      <button class="checkout-btn" id="checkoutBtn" onclick="initiateCheckout()" disabled>
-        ⬡ AUTHORIZE PAYMENT
-      </button>
-
-      <!-- Recent Transactions -->
-      <div class="panel tx-panel">
-        <div class="panel-title">Recent Transactions</div>
-        <div class="tx-list" id="txList">
-          <div style="color:var(--text-dim);font-size:11px;padding:12px 0">No transactions this session.</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- Payment Modal -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div id="processingView">
-      <div class="modal-title">PROCESSING PAYMENT</div>
-      <div class="modal-sub" id="modalSub">Connecting to CivicChain network...</div>
-      <div class="processing-steps" id="processingSteps">
-        <div class="step" id="step1">
-          <div class="step-icon">⬡</div>
-          <div class="step-text">
-            <div class="step-label">Identity Verification</div>
-            <div class="step-detail">Validating citizen credentials on-chain</div>
-          </div>
-        </div>
-        <div class="step" id="step2">
-          <div class="step-icon">🔐</div>
-          <div class="step-text">
-            <div class="step-label">Cryptographic Signing</div>
-            <div class="step-detail">Generating transaction signature</div>
-          </div>
-        </div>
-        <div class="step" id="step3">
-          <div class="step-icon">📡</div>
-          <div class="step-text">
-            <div class="step-label">Broadcasting to Network</div>
-            <div class="step-detail">Propagating to 247 active nodes</div>
-          </div>
-        </div>
-        <div class="step" id="step4">
-          <div class="step-icon">✓</div>
-          <div class="step-text">
-            <div class="step-label">Block Confirmation</div>
-            <div class="step-detail">Awaiting consensus (2/3 nodes)</div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <div class="success-display" id="successView">
-      <div class="success-hex">✓</div>
-      <div class="success-title">PAYMENT CONFIRMED</div>
-      <div class="success-hash" id="successHash">TX: —</div>
-      <div class="success-amount" id="successAmount">0.00 ◈</div>
-      <div class="success-unit">CivicTokens Transferred</div>
-      <div style="margin-top:16px;font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim)" id="successBlock">Included in Block #—</div>
-      <button class="modal-close" onclick="closeModal()">CLOSE TERMINAL · NEW TRANSACTION</button>
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div id="processingView">
+                <div class="modal-title">PROCESSING PAYMENT</div>
+                <div class="modal-sub" id="modalSub">Connecting to CivicChain network...</div>
+                <div class="processing-steps" id="processingSteps">
+                    <div class="step" id="step1">
+                        <div class="step-icon">⬡</div>
+                        <div class="step-text">
+                            <div class="step-label">Identity Verification</div>
+                            <div class="step-detail">Validating citizen credentials on-chain</div>
+                        </div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-icon">🔐</div>
+                        <div class="step-text">
+                            <div class="step-label">Cryptographic Signing</div>
+                            <div class="step-detail">Generating transaction signature</div>
+                        </div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-icon">📡</div>
+                        <div class="step-text">
+                            <div class="step-label">Broadcasting to Network</div>
+                            <div class="step-detail">Propagating to 247 active nodes</div>
+                        </div>
+                    </div>
+                    <div class="step" id="step4">
+                        <div class="step-icon">✓</div>
+                        <div class="step-text">
+                            <div class="step-label">Block Confirmation</div>
+                            <div class="step-detail">Awaiting consensus (2/3 nodes)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-display" id="successView">
+                <div class="success-hex">✓</div>
+                <div class="success-title">PAYMENT CONFIRMED</div>
+                <div class="success-hash" id="successHash">TX: —</div>
+                <div class="success-amount" id="successAmount">0.00 ◈</div>
+                <div class="success-unit">CivicTokens Transferred</div>
+                <div style="margin-top:16px;font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim)"
+                    id="successBlock">Included in Block #—</div>
+                <button class="modal-close" onclick="closeModal()">CLOSE TERMINAL · NEW TRANSACTION</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<script>
-// ─── Data ───────────────────────────────────────────────
-const citizens = [
-  { name: "ALEX CHEN", id: "CID-0047-7X2A", avatar: "👨‍💼", balance: 842.50, badges: ["verified","resident","premium"] },
-  { name: "MAYA PATEL", id: "CID-0091-3K8F", avatar: "👩‍🔬", balance: 1205.00, badges: ["verified","resident"] },
-  { name: "JORDAN SMITH", id: "CID-0023-9M4D", avatar: "🧑‍💻", balance: 334.75, badges: ["verified","resident"] },
-  { name: "RILEY OKAFOR", id: "CID-0158-2P6B", avatar: "👩‍🎨", balance: 2100.00, badges: ["verified","resident","premium"] },
-];
+    <script>
+        // ─── Config ──────────────────────────────────────────────
+        const API_BASE = 'http://localhost:8000';
 
-const products = [
-  { name: "Transit Pass", emoji: "🚇", price: 12.00 },
-  { name: "City Parking", emoji: "🅿️", price: 8.50 },
-  { name: "Civic Café", emoji: "☕", price: 4.75 },
-  { name: "Park Entry", emoji: "🌳", price: 6.00 },
-  { name: "Library", emoji: "📚", price: 2.50 },
-  { name: "Gym Access", emoji: "🏋️", price: 15.00 },
-  { name: "Food Market", emoji: "🛒", price: 22.00 },
-  { name: "Event Ticket", emoji: "🎫", price: 35.00 },
-  { name: "Bike Share", emoji: "🚲", price: 5.00 },
-];
+        // ─── Data ────────────────────────────────────────────────
+        const products = [
+            { name: "Transit Pass", emoji: "🚇", price: 12.00 },
+            { name: "City Parking", emoji: "🅿️", price: 8.50 },
+            { name: "Civic Café", emoji: "☕", price: 4.75 },
+            { name: "Park Entry", emoji: "🌳", price: 6.00 },
+            { name: "Library", emoji: "📚", price: 2.50 },
+            { name: "Gym Access", emoji: "🏋️", price: 15.00 },
+            { name: "Food Market", emoji: "🛒", price: 22.00 },
+            { name: "Event Ticket", emoji: "🎫", price: 35.00 },
+            { name: "Bike Share", emoji: "🚲", price: 5.00 },
+        ];
 
-// ─── State ───────────────────────────────────────────────
-let cart = {};
-let currentCitizen = null;
-let blockHeight = 1048592;
-let scanning = false;
+        // ─── State ───────────────────────────────────────────────
+        let cart = {};
+        let identityVerified = false;
+        let currentIdentity = null;
+        let verifyResponse = null;
+        let blockHeight = 1048592;
 
-// ─── Init ────────────────────────────────────────────────
-function init() {
-  renderProducts();
-  renderChain();
-  setInterval(tickBlock, 8000);
-}
+        // ─── Init ────────────────────────────────────────────────
+        function init() {
+            renderProducts();
+            renderChain();
+            setInterval(tickBlock, 8000);
+            setupUpload();
+        }
 
-function renderProducts() {
-  const grid = document.getElementById('productsGrid');
-  grid.innerHTML = products.map((p, i) => `
-    <button class="product-btn" onclick="addToCart(${i})">
+        // ─── File Upload & Drag/Drop ─────────────────────────────
+        function setupUpload() {
+            const area = document.getElementById('uploadArea');
+            const input = document.getElementById('fileInput');
+
+            area.addEventListener('click', () => {
+                if (!area.classList.contains('verified') && !area.classList.contains('unverified') && !area.classList.contains('api-error')) {
+                    input.click();
+                }
+            });
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('drag-over');
+            });
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('drag-over');
+            });
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+            });
+        }
+
+        // ─── Handle uploaded file ────────────────────────────────
+        async function handleFile(file) {
+            const area = document.getElementById('uploadArea');
+
+            let text;
+            try {
+                text = await file.text();
+            } catch (err) {
+                showUploadError('Failed to read file');
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (err) {
+                showUploadError('Invalid JSON — could not parse file');
+                return;
+            }
+
+            currentIdentity = data;
+
+            // Show verifying state
+            area.className = 'upload-area verifying';
+            document.getElementById('uploadIcon').textContent = '📡';
+            document.getElementById('uploadInstruction').textContent = 'Verifying against blockchain...';
+            document.getElementById('uploadSub').textContent = 'Querying smart contract on Hyperledger Besu';
+
+            // Determine payload shape
+            // .jsonId format: { document: {...}, blockchain: { contractAddress, citizenAddress, ... } }
+            // Raw document: just a plain JSON object
+            let document_payload, contract_address, citizen_address;
+
+            if (data.document && data.blockchain) {
+                document_payload = data.document;
+                contract_address = data.blockchain.contractAddress || null;
+                citizen_address = data.blockchain.citizenAddress || null;
+            } else {
+                document_payload = data;
+                contract_address = null;
+                citizen_address = null;
+            }
+
+            // Call POST /verify
+            try {
+                const body = { document: document_payload };
+                if (contract_address) body.contract_address = contract_address;
+                if (citizen_address) body.citizen_address = citizen_address;
+
+                const resp = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+                    throw new Error(errData.detail || `HTTP ${resp.status}`);
+                }
+
+                verifyResponse = await resp.json();
+                identityVerified = verifyResponse.verified;
+
+                showVerificationResult(data, verifyResponse);
+
+            } catch (err) {
+                console.error('Verification error:', err);
+                showApiError(err.message, data);
+            }
+        }
+
+        // ─── Display verification result ─────────────────────────
+        function showVerificationResult(data, result) {
+            const area = document.getElementById('uploadArea');
+            const verifyDiv = document.getElementById('verifyResult');
+            const card = document.getElementById('citizenCard');
+
+            if (result.verified) {
+                area.className = 'upload-area verified';
+                document.getElementById('uploadIcon').textContent = '✅';
+                document.getElementById('uploadInstruction').textContent = 'Identity Verified';
+                document.getElementById('uploadSub').textContent = `Blockchain record confirmed · ${new Date().toLocaleTimeString()}`;
+
+                document.getElementById('verifyBadgeWrap').innerHTML = '<div class="verify-badge pass">✓ VERIFIED</div>';
+                document.getElementById('vMatch').textContent = 'TRUE';
+                document.getElementById('vMatch').className = 'val match';
+
+                card.classList.remove('unverified');
+                card.classList.add('show');
+                populateCitizenCard(data, result, true);
+            } else {
+                area.className = 'upload-area unverified';
+                document.getElementById('uploadIcon').textContent = '❌';
+                document.getElementById('uploadInstruction').textContent = 'Identity NOT Verified';
+                document.getElementById('uploadSub').textContent = 'Document hash does not match on-chain record';
+
+                document.getElementById('verifyBadgeWrap').innerHTML = '<div class="verify-badge fail">✗ UNVERIFIED</div>';
+                document.getElementById('vMatch').textContent = 'FALSE — HASH MISMATCH';
+                document.getElementById('vMatch').className = 'val no-match';
+
+                card.classList.add('unverified');
+                card.classList.add('show');
+                populateCitizenCard(data, result, false);
+            }
+
+            document.getElementById('vHash').textContent = result.keccak256_hash || '—';
+            document.getElementById('vOnChain').textContent = result.on_chain_hash || 'NOT REGISTERED';
+            document.getElementById('vContract').textContent = result.contract_address || '—';
+            document.getElementById('vCitizen').textContent = result.citizen_address || '—';
+
+            verifyDiv.classList.add('show');
+            showJsonPreview(data);
+            document.getElementById('resetBtn').classList.add('show');
+
+            renderProducts();
+            updateCheckoutBtn();
+        }
+
+        function showApiError(message, data) {
+            const area = document.getElementById('uploadArea');
+            area.className = 'upload-area api-error';
+            document.getElementById('uploadIcon').textContent = '⚠️';
+            document.getElementById('uploadInstruction').textContent = 'Verification Failed';
+            document.getElementById('uploadSub').textContent = message;
+
+            const verifyDiv = document.getElementById('verifyResult');
+            document.getElementById('verifyBadgeWrap').innerHTML = '<div class="verify-badge err">⚠ ERROR</div>';
+            document.getElementById('vHash').textContent = '—';
+            document.getElementById('vOnChain').textContent = '—';
+            document.getElementById('vContract').textContent = '—';
+            document.getElementById('vCitizen').textContent = '—';
+            document.getElementById('vMatch').textContent = message;
+            document.getElementById('vMatch').className = 'val no-match';
+            verifyDiv.classList.add('show');
+
+            if (data) showJsonPreview(data);
+            document.getElementById('resetBtn').classList.add('show');
+            identityVerified = false;
+            renderProducts();
+            updateCheckoutBtn();
+        }
+
+        function showUploadError(message) {
+            const area = document.getElementById('uploadArea');
+            area.className = 'upload-area unverified';
+            document.getElementById('uploadIcon').textContent = '❌';
+            document.getElementById('uploadInstruction').textContent = message;
+            document.getElementById('uploadSub').textContent = 'Please try again with a valid .jsonId file';
+            document.getElementById('resetBtn').classList.add('show');
+        }
+
+        function populateCitizenCard(data, result, verified) {
+            const doc = data.document || data;
+
+            let name = '—';
+            let idText = '';
+
+            if (doc.credentialSubject) {
+                const subj = doc.credentialSubject;
+                name = `${subj.givenName || ''} ${subj.familyName || ''}`.trim() || '—';
+                idText = subj.nationalIdNumber || subj.id || '';
+            } else if (doc.citizen) {
+                name = `${doc.citizen.firstName || ''} ${doc.citizen.lastName || ''}`.trim() || '—';
+                idText = doc.citizen.nationalId || '';
+            } else if (doc.givenName || doc.familyName || doc.firstName || doc.lastName) {
+                name = `${doc.givenName || doc.firstName || ''} ${doc.familyName || doc.lastName || ''}`.trim();
+            }
+
+            document.getElementById('citizenAvatar').textContent = verified ? '🪪' : '⚠️';
+            document.getElementById('citizenName').textContent = name.toUpperCase();
+            document.getElementById('citizenIdText').textContent = idText ? `ID: ${idText}` : (result.citizen_address ? `ADDR: ${result.citizen_address.substring(0, 16)}…` : '—');
+
+            const badgesEl = document.getElementById('citizenBadges');
+            if (verified) {
+                badgesEl.innerHTML = `
+      <span class="badge verified">VERIFIED</span>
+      <span class="badge onchain">ON-CHAIN</span>
+      <span class="badge resident">RESIDENT</span>
+    `;
+            } else {
+                badgesEl.innerHTML = `<span class="badge unverified">UNVERIFIED</span>`;
+            }
+
+            const contractAddr = result.contract_address || '—';
+            document.getElementById('walletContract').textContent = contractAddr.length > 20
+                ? contractAddr.substring(0, 10) + '…' + contractAddr.substring(contractAddr.length - 8)
+                : contractAddr;
+        }
+
+        function showJsonPreview(data) {
+            const el = document.getElementById('jsonPreview');
+            const highlighted = JSON.stringify(data, null, 2)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+                .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+                .replace(/: (\d[\d.]*)/g, ': <span class="n">$1</span>');
+            el.innerHTML = highlighted;
+            el.classList.add('show');
+        }
+
+        // ─── Reset ───────────────────────────────────────────────
+        function resetVerification() {
+            identityVerified = false;
+            currentIdentity = null;
+            verifyResponse = null;
+
+            const area = document.getElementById('uploadArea');
+            area.className = 'upload-area';
+            document.getElementById('uploadIcon').textContent = '📁';
+            document.getElementById('uploadInstruction').textContent = 'Upload your .jsonId credential file';
+            document.getElementById('uploadSub').textContent = 'Drop file here or click to browse · Verifies identity against the blockchain';
+            document.getElementById('fileInput').value = '';
+
+            document.getElementById('verifyResult').classList.remove('show');
+            document.getElementById('citizenCard').classList.remove('show', 'unverified');
+            document.getElementById('jsonPreview').classList.remove('show');
+            document.getElementById('resetBtn').classList.remove('show');
+
+            renderProducts();
+            updateCheckoutBtn();
+        }
+
+        // ─── Products ────────────────────────────────────────────
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = products.map((p, i) => `
+    <button class="product-btn" onclick="addToCart(${i})" ${!identityVerified ? 'disabled' : ''}>
       <div class="product-emoji">${p.emoji}</div>
       <div class="product-name">${p.name}</div>
       <div class="product-price">${p.price.toFixed(2)} ◈</div>
     </button>
   `).join('');
-}
+        }
 
-function renderChain() {
-  const viz = document.getElementById('chainViz');
-  let html = '';
-  for (let i = 0; i < 7; i++) {
-    const num = blockHeight - (6 - i);
-    html += `<div class="chain-block" id="block-${i}" style="font-size:8px;text-align:center;line-height:1.3">#${num}<br><span style="color:var(--accent)">✓</span></div>`;
-    if (i < 6) html += `<div class="chain-connector"></div>`;
-  }
-  viz.innerHTML = html;
-  document.getElementById('lastBlock').textContent = `#${blockHeight}`;
-}
+        // ─── Chain Viz ───────────────────────────────────────────
+        function renderChain() {
+            const viz = document.getElementById('chainViz');
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const num = blockHeight - (6 - i);
+                html += `<div class="chain-block">#${num}<br><span style="color:var(--accent)">✓</span></div>`;
+                if (i < 6) html += `<div class="chain-connector"></div>`;
+            }
+            viz.innerHTML = html;
+            document.getElementById('lastBlock').textContent = `#${blockHeight}`;
+        }
 
-function tickBlock() {
-  blockHeight++;
-  document.getElementById('blockHeight').textContent = blockHeight.toLocaleString();
-  document.getElementById('lastBlock').textContent = `#${blockHeight}`;
+        function tickBlock() {
+            blockHeight++;
+            document.getElementById('blockHeight').textContent = blockHeight.toLocaleString();
+            document.getElementById('lastBlock').textContent = `#${blockHeight}`;
 
-  const viz = document.getElementById('chainViz');
-  const blocks = viz.querySelectorAll('.chain-block');
-  blocks.forEach((b, i) => {
-    if (i < blocks.length - 1) {
-      const nextNum = parseInt(blocks[i+1].textContent) || blockHeight - (blocks.length - 1 - i);
-      b.innerHTML = blocks[i+1].innerHTML;
-      b.classList.toggle('new-block', blocks[i+1].classList.contains('new-block'));
-    }
-  });
-  const last = blocks[blocks.length - 1];
-  last.innerHTML = `#${blockHeight}<br><span style="color:var(--accent2)">●</span>`;
-  last.className = 'chain-block new-block';
-  setTimeout(() => last.classList.remove('new-block'), 2000);
-}
+            const viz = document.getElementById('chainViz');
+            const blocks = viz.querySelectorAll('.chain-block');
+            blocks.forEach((b, i) => {
+                if (i < blocks.length - 1) {
+                    b.innerHTML = blocks[i + 1].innerHTML;
+                }
+            });
+            const last = blocks[blocks.length - 1];
+            last.innerHTML = `#${blockHeight}<br><span style="color:var(--accent2)">●</span>`;
+            last.className = 'chain-block new-block';
+            setTimeout(() => last.classList.remove('new-block'), 2000);
+        }
 
-// ─── Scanning ─────────────────────────────────────────────
-function startScan() {
-  if (scanning) return;
-  scanning = true;
-  const area = document.getElementById('scanArea');
-  area.classList.add('scanning');
-  document.getElementById('scanIcon').textContent = '📡';
-  document.getElementById('scanInstruction').textContent = 'Querying CivicChain...';
-  document.getElementById('scanSub').textContent = 'Retrieving encrypted identity record from blockchain';
+        // ─── Cart ────────────────────────────────────────────────
+        function addToCart(productIdx) {
+            if (!identityVerified) return;
+            const p = products[productIdx];
+            if (cart[productIdx]) {
+                cart[productIdx].qty++;
+            } else {
+                cart[productIdx] = { ...p, qty: 1 };
+            }
+            renderCart();
+        }
 
-  setTimeout(() => {
-    const citizen = citizens[Math.floor(Math.random() * citizens.length)];
-    verifyCitizen(citizen);
-    scanning = false;
-  }, 2000);
-}
+        function updateQty(key, delta) {
+            if (!cart[key]) return;
+            cart[key].qty += delta;
+            if (cart[key].qty <= 0) delete cart[key];
+            renderCart();
+        }
 
-function verifyCitizen(citizen) {
-  currentCitizen = citizen;
-  const area = document.getElementById('scanArea');
-  area.classList.remove('scanning');
-  area.classList.add('verified');
-  document.getElementById('scanIcon').textContent = '✅';
-  document.getElementById('scanInstruction').textContent = 'Identity Verified';
-  document.getElementById('scanSub').textContent = `Blockchain record confirmed · ${new Date().toLocaleTimeString()}`;
-  area.onclick = resetScan;
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const keys = Object.keys(cart);
+            const summary = document.getElementById('cartSummary');
 
-  // Show citizen card
-  const card = document.getElementById('citizenCard');
-  document.getElementById('citizenAvatar').textContent = citizen.avatar;
-  document.getElementById('citizenName').textContent = citizen.name;
-  document.getElementById('citizenIdText').textContent = `ID: ${citizen.id}`;
-  document.getElementById('walletBalance').textContent = `${citizen.balance.toFixed(2)} ◈`;
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="empty-cart"><div class="empty-icon">📦</div>No items added.<br>Select products to begin.</div>`;
+                summary.style.display = 'none';
+                updateCheckoutBtn();
+                return;
+            }
 
-  const badgesEl = document.getElementById('citizenBadges');
-  badgesEl.innerHTML = citizen.badges.map(b =>
-    `<span class="badge ${b}">${b.toUpperCase()}</span>`
-  ).join('');
-
-  card.classList.add('show');
-  updateCheckoutBtn();
-}
-
-function resetScan() {
-  currentCitizen = null;
-  const area = document.getElementById('scanArea');
-  area.className = 'scan-area';
-  area.onclick = startScan;
-  document.getElementById('scanIcon').textContent = '🪪';
-  document.getElementById('scanInstruction').textContent = 'Tap to Scan Citizen ID';
-  document.getElementById('scanSub').textContent = 'NFC · QR · Biometric supported via CivicChain protocol';
-  document.getElementById('citizenCard').classList.remove('show');
-  updateCheckoutBtn();
-}
-
-// ─── Cart ─────────────────────────────────────────────────
-function addToCart(productIdx) {
-  const p = products[productIdx];
-  const key = productIdx;
-  if (cart[key]) {
-    cart[key].qty++;
-  } else {
-    cart[key] = { ...p, qty: 1 };
-  }
-  renderCart();
-}
-
-function updateQty(key, delta) {
-  if (!cart[key]) return;
-  cart[key].qty += delta;
-  if (cart[key].qty <= 0) delete cart[key];
-  renderCart();
-}
-
-function renderCart() {
-  const container = document.getElementById('cartItems');
-  const keys = Object.keys(cart);
-  const emptyCart = document.getElementById('emptyCart');
-  const summary = document.getElementById('cartSummary');
-
-  if (keys.length === 0) {
-    container.innerHTML = `<div class="empty-cart" id="emptyCart"><div class="empty-icon">📦</div>No items added.<br>Select products to begin.</div>`;
-    summary.style.display = 'none';
-    updateCheckoutBtn();
-    return;
-  }
-
-  let html = '';
-  let subtotal = 0;
-  keys.forEach(k => {
-    const item = cart[k];
-    const lineTotal = item.price * item.qty;
-    subtotal += lineTotal;
-    html += `
+            let html = '';
+            let subtotal = 0;
+            keys.forEach(k => {
+                const item = cart[k];
+                const lineTotal = item.price * item.qty;
+                subtotal += lineTotal;
+                html += `
       <div class="cart-item">
         <div class="cart-item-emoji">${item.emoji}</div>
         <div class="cart-item-info">
@@ -812,121 +1742,128 @@ function renderCart() {
         </div>
         <div class="cart-item-total">${lineTotal.toFixed(2)} ◈</div>
       </div>`;
-  });
+            });
 
-  container.innerHTML = html;
-  summary.style.display = 'block';
+            container.innerHTML = html;
+            summary.style.display = 'block';
 
-  const tax = subtotal * 0.03;
-  const total = subtotal + tax;
-  document.getElementById('subtotal').textContent = `${subtotal.toFixed(2)} ◈`;
-  document.getElementById('taxAmount').textContent = `${tax.toFixed(2)} ◈`;
-  document.getElementById('totalAmount').textContent = `${total.toFixed(2)} ◈`;
+            const tax = subtotal * 0.03;
+            const total = subtotal + tax;
+            document.getElementById('subtotal').textContent = `${subtotal.toFixed(2)} ◈`;
+            document.getElementById('taxAmount').textContent = `${tax.toFixed(2)} ◈`;
+            document.getElementById('totalAmount').textContent = `${total.toFixed(2)} ◈`;
 
-  updateCheckoutBtn();
-}
+            updateCheckoutBtn();
+        }
 
-function getTotal() {
-  const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
-  return subtotal * 1.03;
-}
+        function getTotal() {
+            const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
+            return subtotal * 1.03;
+        }
 
-function updateCheckoutBtn() {
-  const btn = document.getElementById('checkoutBtn');
-  const hasItems = Object.keys(cart).length > 0;
-  btn.disabled = !(currentCitizen && hasItems);
-}
+        function updateCheckoutBtn() {
+            const btn = document.getElementById('checkoutBtn');
+            const hasItems = Object.keys(cart).length > 0;
+            btn.disabled = !(identityVerified && hasItems);
+        }
 
-// ─── Checkout ─────────────────────────────────────────────
-function initiateCheckout() {
-  if (!currentCitizen || Object.keys(cart).length === 0) return;
-  document.getElementById('modalOverlay').classList.add('show');
-  runProcessing();
-}
+        // ─── Checkout ────────────────────────────────────────────
+        function initiateCheckout() {
+            if (!identityVerified || Object.keys(cart).length === 0) return;
+            document.getElementById('modalOverlay').classList.add('show');
+            runProcessing();
+        }
 
-async function runProcessing() {
-  const steps = ['step1','step2','step3','step4'];
-  const delays = [800, 700, 900, 600];
+        async function runProcessing() {
+            const steps = ['step1', 'step2', 'step3', 'step4'];
+            const delays = [800, 700, 900, 600];
 
-  document.getElementById('processingView').style.display = 'block';
-  document.getElementById('successView').classList.remove('show');
+            document.getElementById('processingView').style.display = 'block';
+            document.getElementById('successView').classList.remove('show');
 
-  for (let i = 0; i < steps.length; i++) {
-    // Mark previous as done
-    if (i > 0) {
-      const prev = document.getElementById(steps[i-1]);
-      prev.classList.remove('active');
-      prev.classList.add('done');
-      prev.querySelector('.step-icon').textContent = '✓';
-    }
-    document.getElementById(steps[i]).classList.add('active');
-    await sleep(delays[i]);
-  }
+            for (let i = 0; i < steps.length; i++) {
+                if (i > 0) {
+                    const prev = document.getElementById(steps[i - 1]);
+                    prev.classList.remove('active');
+                    prev.classList.add('done');
+                    prev.querySelector('.step-icon').textContent = '✓';
+                }
+                document.getElementById(steps[i]).classList.add('active');
+                await sleep(delays[i]);
+            }
 
-  // All done
-  document.getElementById(steps[3]).classList.remove('active');
-  document.getElementById(steps[3]).classList.add('done');
-  document.getElementById(steps[3]).querySelector('.step-icon').textContent = '✓';
+            document.getElementById(steps[3]).classList.remove('active');
+            document.getElementById(steps[3]).classList.add('done');
+            document.getElementById(steps[3]).querySelector('.step-icon').textContent = '✓';
 
-  await sleep(400);
-  showSuccess();
-}
+            await sleep(400);
+            showSuccess();
+        }
 
-function showSuccess() {
-  const total = getTotal();
-  const txHash = `0x${randomHex(12)}...${randomHex(4)}`;
-  blockHeight++;
+        function showSuccess() {
+            const total = getTotal();
+            const txHash = verifyResponse
+                ? `${verifyResponse.keccak256_hash.substring(0, 16)}...${verifyResponse.keccak256_hash.substring(verifyResponse.keccak256_hash.length - 8)}`
+                : `0x${randomHex(12)}...${randomHex(4)}`;
+            blockHeight++;
 
-  document.getElementById('processingView').style.display = 'none';
-  document.getElementById('successView').classList.add('show');
-  document.getElementById('successHash').textContent = `TX: ${txHash}`;
-  document.getElementById('successAmount').textContent = `${total.toFixed(2)} ◈`;
-  document.getElementById('successBlock').textContent = `Confirmed in Block #${blockHeight.toLocaleString()}`;
+            document.getElementById('processingView').style.display = 'none';
+            document.getElementById('successView').classList.add('show');
+            document.getElementById('successHash').textContent = `TX: ${txHash}`;
+            document.getElementById('successAmount').textContent = `${total.toFixed(2)} ◈`;
+            document.getElementById('successBlock').textContent = `Confirmed in Block #${blockHeight.toLocaleString()}`;
 
-  // Add to TX list
-  addTxToList(txHash, total);
-  tickBlock();
-}
+            addTxToList(txHash, total);
+            tickBlock();
+        }
 
-function addTxToList(hash, amount) {
-  const list = document.getElementById('txList');
-  const time = new Date().toLocaleTimeString();
-  const entry = document.createElement('div');
-  entry.className = 'tx-entry';
-  entry.innerHTML = `
+        function addTxToList(hash, amount) {
+            const list = document.getElementById('txList');
+            const time = new Date().toLocaleTimeString();
+
+            let name = 'CITIZEN';
+            if (currentIdentity) {
+                const doc = currentIdentity.document || currentIdentity;
+                if (doc.credentialSubject) {
+                    name = `${doc.credentialSubject.givenName || ''} ${doc.credentialSubject.familyName || ''}`.trim().toUpperCase();
+                } else if (doc.citizen) {
+                    name = `${doc.citizen.firstName || ''} ${doc.citizen.lastName || ''}`.trim().toUpperCase();
+                }
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'tx-entry';
+            entry.innerHTML = `
     <div class="tx-hash">${hash}</div>
     <div class="tx-status confirmed">CONFIRMED</div>
-    <div class="tx-detail">${currentCitizen.name} · ${amount.toFixed(2)} ◈ · ${time}</div>
+    <div class="tx-detail">${name} · ${amount.toFixed(2)} ◈ · ${time}</div>
   `;
-  if (list.querySelector('div[style]')) list.innerHTML = '';
-  list.insertBefore(entry, list.firstChild);
-  // Keep only 5
-  const entries = list.querySelectorAll('.tx-entry');
-  if (entries.length > 5) entries[entries.length-1].remove();
-}
+            if (list.querySelector('div[style]')) list.innerHTML = '';
+            list.insertBefore(entry, list.firstChild);
+            const entries = list.querySelectorAll('.tx-entry');
+            if (entries.length > 5) entries[entries.length - 1].remove();
+        }
 
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-  // Reset
-  cart = {};
-  renderCart();
-  resetScan();
-  // Reset steps
-  ['step1','step2','step3','step4'].forEach(id => {
-    const el = document.getElementById(id);
-    el.className = 'step';
-    const icons = ['⬡','🔐','📡','✓'];
-    el.querySelector('.step-icon').textContent = icons[['step1','step2','step3','step4'].indexOf(id)];
-  });
-}
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+            cart = {};
+            renderCart();
+            ['step1', 'step2', 'step3', 'step4'].forEach((id, idx) => {
+                const el = document.getElementById(id);
+                el.className = 'step';
+                const icons = ['⬡', '🔐', '📡', '✓'];
+                el.querySelector('.step-icon').textContent = icons[idx];
+            });
+        }
 
-// ─── Helpers ─────────────────────────────────────────────
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function randomHex(n) {
-  return [...Array(n)].map(() => Math.floor(Math.random()*16).toString(16)).join('');
-}
+        // ─── Helpers ─────────────────────────────────────────────
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function randomHex(n) {
+            return [...Array(n)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        }
 
-init();
-</script>
+        init();
+    </script>
 </body>
+
 </html>
