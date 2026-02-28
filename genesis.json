@@ -1,31 +1,31 @@
 {
-    "config": {
-        "chainId": 1337,
-        "homesteadBlock": 0,
-        "eip150Block": 0,
-        "eip155Block": 0,
-        "eip158Block": 0,
-        "byzantiumBlock": 0,
-        "constantinopleBlock": 0,
-        "petersburgBlock": 0,
-        "istanbulBlock": 0,
-        "berlinBlock": 0,
-        "londonBlock": 0,
-        "clique": {
-            "blockperiodseconds": 5,
-            "epochlength": 30000
-        }
-    },
-    "nonce": "0x0",
-    "timestamp": "0x0",
-    "gasLimit": "0x1fffffffffffff",
-    "difficulty": "0x1",
-    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "coinbase": "0x0000000000000000000000000000000000000000",
-    "alloc": {
-        "SIGNER_ADDRESS_PLACEHOLDER": {
-            "balance": "0x200000000000000000000000000000000000000000000000000000000000000"
-        }
-    },
-    "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000SIGNER_ADDRESS_PLACEHOLDER0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  "config": {
+    "chainId": 1337,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "clique": {
+      "blockperiodseconds": 5,
+      "epochlength": 30000
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x0",
+  "gasLimit": "0x1fffffffffffff",
+  "difficulty": "0x1",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "0x2001c163af2de54de00e254b4f35be7b96ba7fd2": {
+      "balance": "0x200000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "extraData": "0x00000000000000000000000000000000000000000000000000000000000000002001c163af2de54de00e254b4f35be7b96ba7fd20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 }

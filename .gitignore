@@ -4,3 +4,4 @@ key
 node-address
 genesis.json
 docker-compose.yml
+data/
