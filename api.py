@@ -16,6 +16,7 @@ Endpoints:
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -262,3 +263,155 @@ def verify_identity(body: VerifyRequest):
         contract_address=contract_address,
         citizen_address=citizen,
     )
+
+
+# ── Example: full lifecycle demo ────────────────────────────────────────────
+
+if __name__ == "__main__":
+    """
+    Run this file directly to see a complete example:
+      1. Register a citizen's identity document on-chain.
+      2. Save the document as a .jsonId file.
+      3. Verify the .jsonId against the blockchain (should PASS).
+      4. Verify a fake/tampered .jsonId (should FAIL).
+
+    Prerequisites:
+      - Besu node running on http://127.0.0.1:8545
+      - Contract ABI + BIN in sol-bin/
+
+    Usage:
+      python api.py
+    """
+    import pprint
+    import tempfile
+
+    SEPARATOR = "=" * 60
+
+    # ── Step 1: Create a citizen identity document ──────────────────────
+    citizen_id_document = {
+        "type": "GovernmentID",
+        "citizen": {
+            "firstName": "Jane",
+            "lastName": "Doe",
+            "dateOfBirth": "1990-05-15",
+            "nationalId": "AB-1234567",
+        },
+        "issuer": "Department of National Identity",
+        "issuedDate": "2025-01-10",
+        "expiryDate": "2035-01-10",
+        "country": "Examplestan",
+    }
+
+    print(SEPARATOR)
+    print("STEP 1 — Citizen identity document")
+    print(SEPARATOR)
+    pprint.pprint(citizen_id_document)
+
+    # ── Step 2: Register the document on-chain ──────────────────────────
+    print(f"\n{SEPARATOR}")
+    print("STEP 2 — Register identity on the blockchain")
+    print(SEPARATOR)
+
+    w3 = _get_w3()
+    hex_hash, id_hash_bytes = _hash_json(citizen_id_document)
+    contract_addr = _deploy_contract(w3)
+
+    abi = _load_contract_abi()
+    contract = w3.eth.contract(address=Web3.to_checksum_address(contract_addr), abi=abi)
+    nonce = w3.eth.get_transaction_count(ACCOUNT_ADDRESS)
+
+    tx = contract.functions.registerIdentity(
+        ACCOUNT_ADDRESS, id_hash_bytes
+    ).build_transaction(
+        {
+            "from": ACCOUNT_ADDRESS,
+            "nonce": nonce,
+            "gas": 200_000,
+            "gasPrice": w3.eth.gas_price,
+            "chainId": CHAIN_ID,
+        }
+    )
+    signed = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    print(f"  Keccak-256 hash : {hex_hash}")
+    print(f"  Contract address: {contract_addr}")
+    print(f"  TX hash         : {tx_hash.hex()}")
+    print(f"  Block number    : {receipt['blockNumber']}")
+
+    # ── Step 3: Generate the .jsonId file ───────────────────────────────
+    print(f"\n{SEPARATOR}")
+    print("STEP 3 — Generate .jsonId credential file")
+    print(SEPARATOR)
+
+    json_id = {
+        "document": citizen_id_document,
+        "blockchain": {
+            "network": "Hyperledger Besu (local)",
+            "chainId": CHAIN_ID,
+            "contractAddress": contract_addr,
+            "citizenAddress": ACCOUNT_ADDRESS,
+            "keccak256Hash": hex_hash,
+            "txHash": tx_hash.hex(),
+            "blockNumber": receipt["blockNumber"],
+        },
+    }
+
+    json_id_path = os.path.join(tempfile.gettempdir(), "jane_doe.jsonId")
+    with open(json_id_path, "w") as f:
+        json.dump(json_id, f, indent=2)
+
+    print(f"  Saved to: {json_id_path}")
+    print("  Contents:")
+    print(json.dumps(json_id, indent=2))
+
+    # ── Step 4: Verify the REAL .jsonId ─────────────────────────────────
+    print(f"\n{SEPARATOR}")
+    print("STEP 4 — Verify the REAL .jsonId  ✓  (expect: PASS)")
+    print(SEPARATOR)
+
+    with open(json_id_path) as f:
+        loaded = json.load(f)
+
+    verify_hash, verify_bytes = _hash_json(loaded["document"])
+    is_registered = contract.functions.isRegistered(ACCOUNT_ADDRESS).call()
+    matches = contract.functions.verifyIdentity(ACCOUNT_ADDRESS, verify_bytes).call()
+    stored_hash = "0x" + contract.functions.getIdentity(ACCOUNT_ADDRESS).call().hex()
+
+    print(f"  Submitted hash : {verify_hash}")
+    print(f"  On-chain hash  : {stored_hash}")
+    print(f"  Is registered  : {is_registered}")
+    print(f"  Hashes match   : {matches}")
+    print(f"  ➜ Verification : {'✅ PASSED' if matches else '❌ FAILED'}")
+
+    # ── Step 5: Verify a FAKE / tampered .jsonId ────────────────────────
+    print(f"\n{SEPARATOR}")
+    print("STEP 5 — Verify a FAKE .jsonId  ✗  (expect: FAIL)")
+    print(SEPARATOR)
+
+    fake_document = {
+        "type": "GovernmentID",
+        "citizen": {
+            "firstName": "John",
+            "lastName": "Fakerson",
+            "dateOfBirth": "2000-01-01",
+            "nationalId": "ZZ-9999999",
+        },
+        "issuer": "Totally Legit ID Bureau",
+        "issuedDate": "2025-06-01",
+        "expiryDate": "2035-06-01",
+        "country": "Fakeland",
+    }
+
+    fake_hash, fake_bytes = _hash_json(fake_document)
+    fake_matches = contract.functions.verifyIdentity(ACCOUNT_ADDRESS, fake_bytes).call()
+
+    print(f"  Fake hash      : {fake_hash}")
+    print(f"  On-chain hash  : {stored_hash}")
+    print(f"  Hashes match   : {fake_matches}")
+    print(f"  ➜ Verification : {'✅ PASSED' if fake_matches else '❌ FAILED'}")
+
+    print(f"\n{SEPARATOR}")
+    print("DEMO COMPLETE")
+    print(SEPARATOR)
