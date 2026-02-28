@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  besu-node:
+    image: hyperledger/besu:latest
+    container_name: government-node
+    restart: unless-stopped
+    ports:
+      # JSON-RPC HTTP
+      - "8545:8545"
+      # JSON-RPC WebSocket
+      - "8546:8546"
+      # P2P (for future multi-node expansion)
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
+    volumes:
+      - ./genesis.json:/opt/besu/genesis.json:ro
+      - ./data:/opt/besu/data
+    environment:
+      - BESU_OPTS=-Xmx512m
+    entrypoint:
+      - /opt/besu/bin/besu
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/opt/besu/genesis.json
+      - --network-id=1337
+      - --rpc-http-enabled
+      - --rpc-http-api=ETH,NET,CLIQUE,WEB3,ADMIN,DEBUG,TXPOOL
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-cors-origins=*
+      - --rpc-ws-enabled
+      - --rpc-ws-api=ETH,NET,CLIQUE,WEB3
+      - --rpc-ws-host=0.0.0.0
+      - --rpc-ws-port=8546
+      - --host-allowlist=*
+      - --min-gas-price=0
+      - --miner-enabled
+      - --miner-coinbase=SIGNER_ADDRESS_PLACEHOLDER
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
