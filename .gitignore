@@ -1,7 +1,3 @@
-.government-address
 .python-version
-key
 node-address
-genesis.json
 docker-compose.yml
-data/
