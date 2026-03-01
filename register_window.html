@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decentralia · Resident Registry</title>
+  <title>Civic-Chain · Resident Registry</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -58,18 +58,6 @@
       z-index: 0;
     }
 
-    .scanline {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0.4;
-      animation: scan 6s linear infinite;
-      z-index: 100;
-      pointer-events: none;
-    }
 
     @keyframes scan {
       from {
@@ -538,7 +526,7 @@
     const pad2 = n => String(n).padStart(2, '0');
     const now = () => new Date().toISOString().split('.')[0] + 'Z';
     const buildCredential = (form, uid) => {
-      const id = uid || `did:decentralia:citizen-${Date.now().toString(36)}`;
+      const id = uid || `did:civic-chain:citizen-${Date.now().toString(36)}`;
       return {
         "@context": [
           "https://www.w3.org/2018/credentials/v1",
@@ -547,8 +535,8 @@
         id: `urn:uuid:${uuid()}`,
         type: ["VerifiableCredential", "GovernmentIdentityCredential"],
         issuer: {
-          id: "did:decentralia:national-authority",
-          name: "Decentralia National Identity Authority"
+          id: "did:civic-chain:national-authority",
+          name: "Civic-Chain National Identity Authority"
         },
         issuanceDate: now(),
         expirationDate: `${new Date().getFullYear() + 10}-${pad2(new Date().getMonth() + 1)}-${pad2(new Date().getDate())}T00:00:00Z`,
@@ -564,7 +552,7 @@
             addressLocality: form.addressLocality,
             addressRegion: form.addressRegion,
             postalCode: form.postalCode,
-            addressCountry: "Decentralia"
+            addressCountry: "Civic-Chain"
           },
           biometricTemplateHash: hash(`${form.givenName}${form.familyName}${form.dateOfBirth}${Date.now()}`)
         },
@@ -572,7 +560,7 @@
           type: "EcdsaSecp256k1Signature2019",
           created: now(),
           proofPurpose: "assertionMethod",
-          verificationMethod: "did:decentralia:national-authority#key-1",
+          verificationMethod: "did:civic-chain:national-authority#key-1",
           jws: btoa(`${form.givenName}.${form.familyName}.${uuid()}`).substring(0, 88) + "=="
         }
       };
@@ -729,16 +717,16 @@
           {/* HEADER */}
           <div className="header">
             <div className="logo-block">
-              <div className="logo-hex">DC</div>
+              <div className="logo-hex">C-C</div>
               <div className="logo-text">
-                <h1>Decentralia</h1>
+                <h1>Civic-Chain</h1>
                 <p>Smart City · Resident Registry · v2.6.1</p>
               </div>
             </div>
             <div className="header-status">
               <div className="live">CHAIN CONNECTED</div>
               <div>NODE: LEDGERTON-09</div>
-              <div>BLOCK: #{Math.floor(Date.now() / 15000).toLocaleString()}</div>
+              <div>BLOCK: #938</div>
             </div>
           </div>
 
@@ -774,7 +762,7 @@
                   <div className="section-label">Blockchain Credential Preview</div>
                   <div className="did-display">
                     DID will be auto-generated upon submission<br />
-                    ISSUER: did:decentralia:national-authority<br />
+                    ISSUER: did:civic-chain:national-authority<br />
                     PROOF: EcdsaSecp256k1Signature2019<br />
                     BIOMETRIC: SHA-256 hash (auto-derived)
                   </div>
